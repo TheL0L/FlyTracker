@@ -47,6 +47,7 @@ def analyze_video(fly_tracker, video_path, output_path, draw_constraints = False
 
         for track in tracks:
             id, conf, x1, y1, x2, y2 = track
+            center_x, center_y = helper.get_center(x1, y1, x2, y2)
 
             if id not in paths:
                 paths[id] = []
@@ -57,7 +58,7 @@ def analyze_video(fly_tracker, video_path, output_path, draw_constraints = False
 
             cv2.circle(
                 img=        frame,
-                center=     helper.get_center(x1, y1, x2, y2),
+                center=     (center_x, center_y),
                 radius=     5,
                 color=      helper.rgb_to_bgr(helper.id_to_color(id)),
                 thickness=  2
@@ -70,12 +71,11 @@ def analyze_video(fly_tracker, video_path, output_path, draw_constraints = False
                 color=      helper.rgb_to_bgr(helper.id_to_color(_id))
             )
 
-        x1 = fly_tracker.constraints['x_min'] if fly_tracker.constraints['x_min'] is not None else 0
-        x2 = fly_tracker.constraints['x_max'] if fly_tracker.constraints['x_max'] is not None else width - 1
-        y1 = fly_tracker.constraints['y_min'] if fly_tracker.constraints['y_min'] is not None else 0
-        y2 = fly_tracker.constraints['y_max'] if fly_tracker.constraints['y_max'] is not None else height - 1
-
         if draw_constraints:
+            x1 = fly_tracker.constraints['x_min'] if fly_tracker.constraints['x_min'] is not None else 0
+            x2 = fly_tracker.constraints['x_max'] if fly_tracker.constraints['x_max'] is not None else width - 1
+            y1 = fly_tracker.constraints['y_min'] if fly_tracker.constraints['y_min'] is not None else 0
+            y2 = fly_tracker.constraints['y_max'] if fly_tracker.constraints['y_max'] is not None else height - 1
             cv2.rectangle(
                 img=        frame,
                 pt1=        helper.make_point(x1, y1),

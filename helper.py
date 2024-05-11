@@ -32,7 +32,7 @@ def make_point(x, y):
 
 # helper function to calculate center point
 def get_center(x1, y1, x2, y2):
-    return make_point((x1 + x2)/2, (y1 + y2)/2)
+    return (x1 + x2)/2, (y1 + y2)/2
 
 # helper function to draw points on an image
 def draw_points(image, points, color=(0, 255, 0), radius=0, thickness=1):
@@ -43,12 +43,15 @@ def draw_points(image, points, color=(0, 255, 0), radius=0, thickness=1):
 def draw_points_with_lines(image, points, color=(0, 255, 0), radius=0, thickness=1):
     # draw points
     for point in points:
-        cv2.circle(image, point, radius, color, thickness)
+        int_point = make_point(*point) 
+        cv2.circle(image, int_point, radius, color, thickness)
     
     # connect points with lines
     if len(points) > 1:
         for i in range(len(points) - 1):
-            cv2.line(image, points[i], points[i + 1], color, thickness)
+            int_p1 = make_point(*points[i])
+            int_p2 = make_point(*points[i + 1])
+            cv2.line(image, int_p1, int_p2, color, thickness)
 
 def rgb_to_bgr(color):
     r, g, b = color

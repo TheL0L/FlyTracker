@@ -2,5 +2,13 @@ __pycache__/
 .venv/
 .vscode/
 dataset/
+example/
+model_evaluation/
+model_tracking/
+runs/
+showcase/
 
 *.pt
+*.csv
+*.mp4
+*.avi

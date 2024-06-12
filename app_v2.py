@@ -188,6 +188,18 @@ def annotate_video(data, video_path, output_path, constraints, draw_constraints 
         # add current frame's points to the paths
         for track in data[progress_bar.n]:
             id, conf, x1, y1, x2, y2 = track
+
+            cv2.putText(
+                img=        frame,
+                text=       f'{id}',
+                org=        helper.make_point(*helper.get_center(x1,y1,x2,y2)),
+                fontFace=   cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=  0.4,
+                color=      helper.rgb_to_bgr(helper.id_to_color(id)),
+                thickness=  1,
+                lineType=   cv2.LINE_AA
+            )
+
             if id not in paths:
                 paths[id] = []
             paths[id].append(helper.get_center(x1, y1, x2, y2))
@@ -239,25 +251,41 @@ def prepare_output_path(output_path):
 
 
 if __name__ == '__main__':
-    video_path = './model_evaluation/eval_video.avi'
-    prepare_output_path('./model_tracking')
+    video_paths = [
+        './showcase/4_short.avi',
+    ]
+    output_root_path = os.path.normpath('./showcase/result')
+    prepare_output_path(output_root_path)
 
     _prefix = ''
-    _suffix = '_result_reworked'
+    _suffix = '_result'
 
-    file_name = os.path.basename(os.path.normpath(video_path))
-    output_path = f'./model_tracking/{_prefix}{file_name}{_suffix}'
-
+    # setup model
     ft = FlyTracker('./runs/detect/train7/weights/best.pt')
     ft.set_constraints(y_min=100)
 
-    raw_data = analyze_video(ft, video_path)
+    # iterate over videos
+    for video_path in video_paths:
+        # check video existance
+        video_path = os.path.normpath(video_path)
+        if not os.path.exists(video_path):
+            print(f'could not locate the video at "{video_path}".')
+            continue
 
-    # with open('./raw_data.data', 'r') as datafile:
-    #     raw_data = datafile.read()
-    #     raw_data = eval(raw_data)
+        # prepare output basename
+        file_name = os.path.basename(video_path)
+        file_name = f'{_prefix}{file_name}{_suffix}'
+        output_path = os.path.join(output_root_path, file_name)
 
-    processed_data = process_data(raw_data, max_tracks_gap=10)
+        # read and process data
+        raw_data = analyze_video(ft, video_path)
+        processed_data = process_data(raw_data, max_tracks_gap=3)
 
-    annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
-    write_to_csv(processed_data, f'{output_path}.csv')
+        # outputs
+        annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
+        write_to_csv(processed_data, f'{output_path}.csv')
+
+
+        # reset tracking for next video
+        ft.reset_tracking()
+    

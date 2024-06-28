@@ -1,10 +1,34 @@
 from FlyTracker import FlyTracker
-import cv2, csv, math, os
+import cv2, csv
 from tqdm import tqdm
 import helper
+from data_postprocess import process_data
+import video_preprocess
+import file_helper
 
 
-def analyze_video(fly_tracker, video_path):
+def preprocess_frame(frame):
+    # RED LUT
+    __R_LUT_X=[0, 100, 110, 150, 255]
+    __R_LUT_Y=[0, 146, 238, 255, 255]
+
+    # GREEN LUT
+    __G_LUT_X=[0, 100, 110, 150, 255]
+    __G_LUT_Y=[0, 0, 156, 255, 255]
+
+    # BLUE LUT
+    __B_LUT_X=[0, 63, 127, 191, 255]
+    __B_LUT_Y=[0, 0, 255, 255, 255]
+    lut_r = video_preprocess.create_lut_8uc1(__R_LUT_X, __R_LUT_Y)
+    lut_g = video_preprocess.create_lut_8uc1(__G_LUT_X, __G_LUT_Y)
+    lut_b = video_preprocess.create_lut_8uc1(__B_LUT_X, __B_LUT_Y)
+
+    adjusted_frame = video_preprocess.apply_curves_to_channels(frame, lut_r, lut_g, lut_b)
+    adjusted_frame = video_preprocess.to_grayscale_3c(adjusted_frame)
+    return adjusted_frame
+
+
+def analyze_video(fly_tracker, video_path, frame_preprocess_method = None):
     # setup opencv video reader
     stream = cv2.VideoCapture(video_path)
     success, frame = stream.read()
@@ -12,12 +36,17 @@ def analyze_video(fly_tracker, video_path):
     # prepare variable for storing data
     data = {}
 
+    # prepare preprocess method
+    if frame_preprocess_method is None:
+        frame_preprocess_method = lambda f: f
+
     # setup progress bar
     frames_count = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
     progress_bar = tqdm(total=frames_count, desc='Analysis Progress', unit='frame')
 
     # iterate over video frames, and append tracks to the data variable
     while success:
+        frame = frame_preprocess_method(frame)
         tracks = fly_tracker.detect(frame)
 
         data[progress_bar.n] = []
@@ -35,122 +64,6 @@ def analyze_video(fly_tracker, video_path):
     return data
 
 
-def get_ids(tracks):
-    ids = set()
-    for track in tracks:
-        ids.add(track[0])
-    return ids
-
-
-def square_distance(p1, p2):
-    x_dif = p2[0] - p1[0]
-    y_dif = p2[1] - p1[1]
-    return math.sqrt( math.pow(x_dif, 2) + math.pow(y_dif, 2) )
-
-
-def calculate_distances(point, tracks):
-    results = []
-    for track in tracks:
-        id, conf, x1, y1, x2, y2 = track
-        center = helper.get_center(x1, y1, x2, y2)
-        results.append((id, conf, square_distance(point, center)))
-    return results
-
-
-def find_closest(results):
-    min_index = 0
-    for index in range(1, len(results)):
-        min_index = index if results[index] < results[min_index] else min_index
-    return results[min_index]
-
-
-def get_index(id, tracks):
-    for index in range(len(tracks)):
-        if tracks[index][0] == id:
-            return index
-    return None
-
-
-# TODO: Debug this
-def process_data(data, max_tracks_gap = 3.0):
-    # track = tuple( id, conf, x1, y1, x2, y2 )
-    # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
-    
-    # prepare variable for storing the processed data
-    result = {0: []}
-
-    # prepare a dictionary for linking swapped IDs
-    links = {}
-
-    # setup progress bar
-    progress_bar = tqdm(total=len(data), desc='Processing Progress', unit='frame')
-
-    # iterate over the data, in search for tracks that might be combined due to gaining new IDs
-    last_frame_tracks = data[0]
-    progress_bar.update()
-    for frame_number in range(1, len(data)):
-        # pull current frame tracks
-        tracks = data[frame_number]
-        
-        # skip if last frame had no tracks
-        if len(last_frame_tracks) == 0:
-            last_frame_tracks = tracks      # update last_tracks to current_tracks
-            result[frame_number] = tracks   # append frame to results
-            progress_bar.update()
-            continue
-        
-        # skip if current frame has no new IDs
-        # use the fact that old IDs need 'FlyTracker.track_max_age' frames to be discarded
-        old_ids = get_ids(last_frame_tracks)
-        cur_ids = get_ids(tracks)
-        if len(cur_ids.difference(old_ids)) == 0:
-            last_frame_tracks = tracks      # update last_tracks to current_tracks
-            result[frame_number] = tracks   # append frame to results
-            progress_bar.update()
-            continue
-
-        # iterate over tracks, in search for new IDs
-        for track in tracks:
-            if track[0] in old_ids:
-                continue
-            # found a new ID, unpack track variables
-            id, conf, x1, y1, x2, y2 = track
-            center = helper.get_center(x1, y1, x2, y2)
-
-            # calculate distances between old_tracks and current_track
-            candidates = calculate_distances(center, last_frame_tracks)
-            # filter out candidates that have any detection confidence
-            candidates = list(filter(lambda candidate: candidate[1] is None, candidates))
-
-            if len(candidates) == 0:
-                continue
-
-            # find the closest candidate
-            close_id, _, dst = find_closest(candidates)
-
-            if dst > max_tracks_gap:
-                continue
-
-            # create a link between the current ID and the old_ID
-            links[id] = close_id
-
-        # override tracks based on generated links
-        fixed_tracks = {}
-        for track in tracks:
-            id, conf, x1, y1, x2, y2 = track
-            if id in links.keys():
-                id = links[id]
-            fixed_tracks[id] = (id, conf, x1, y1, x2, y2)
-
-        last_frame_tracks = fixed_tracks.values()      # update last_tracks to current_tracks
-        result[frame_number] = fixed_tracks.values()   # append processed frame to results
-        progress_bar.update()
-
-    progress_bar.close()
-    return result
-
-
-# TODO: think about the annotation workflow, a decorator approach would be great
 def annotate_video(data, video_path, output_path, constraints, draw_constraints = False):
     # setup opencv video reader
     stream = cv2.VideoCapture(video_path)
@@ -245,17 +158,13 @@ def write_to_csv(data, output_path):
                 writer.writerow([frame_num, *track])
 
 
-def prepare_output_path(output_path):
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
 
 if __name__ == '__main__':
     video_paths = [
         './showcase/4_short.avi',
     ]
-    output_root_path = os.path.normpath('./showcase/result')
-    prepare_output_path(output_root_path)
+    output_root_path = file_helper.normalize_path('./showcase/result')
+    file_helper.prepare_output_path(output_root_path)
 
     _prefix = ''
     _suffix = '_result'
@@ -264,27 +173,34 @@ if __name__ == '__main__':
     ft = FlyTracker('./runs/detect/train7/weights/best.pt')
     ft.set_constraints(y_min=100)
 
+    # define a preprocess method for the videos
+    _preprocess_method = None
+
     # iterate over videos
     for video_path in video_paths:
         # check video existance
-        video_path = os.path.normpath(video_path)
-        if not os.path.exists(video_path):
+        video_path = file_helper.normalize_path(video_path)
+        if file_helper.check_existance(video_path):
+            print(f'working on {video_path}...')
+        else:
             print(f'could not locate the video at "{video_path}".')
             continue
 
         # prepare output basename
-        file_name = os.path.basename(video_path)
+        file_name = file_helper.get_basename_stem(video_path)
         file_name = f'{_prefix}{file_name}{_suffix}'
-        output_path = os.path.join(output_root_path, file_name)
+        output_path = file_helper.join_paths(output_root_path, file_name)
 
         # read and process data
-        raw_data = analyze_video(ft, video_path)
+        raw_data = analyze_video(ft, video_path, _preprocess_method)
         processed_data = process_data(raw_data, max_tracks_gap=3)
 
         # outputs
         annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
         write_to_csv(processed_data, f'{output_path}.csv')
 
+        # notify the user
+        print(f'results saved at:\n\t{output_path}.mp4\n\t{output_path}.csv\n')
 
         # reset tracking for next video
         ft.reset_tracking()

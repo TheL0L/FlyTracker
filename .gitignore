@@ -12,3 +12,6 @@ showcase/
 *.csv
 *.mp4
 *.avi
+
+effect_previews/
+testing_snap.png

@@ -25,7 +25,7 @@ def calculate_distances(point, tracks):
     return results
 
 
-def find_closest(results):
+def find_nearest(results):
     min_index = 0
     for index in range(1, len(results)):
         min_index = index if results[index] < results[min_index] else min_index
@@ -40,7 +40,7 @@ def process_data(data, max_tracks_gap = 3.0):
     result = {0: []}
 
     # prepare a dictionary for linking swapped IDs
-    links = {}
+    links = {}  # {swapped: original}
 
     # setup progress bar
     progress_bar = tqdm(total=len(data), desc='Processing Progress', unit='frame')
@@ -85,14 +85,14 @@ def process_data(data, max_tracks_gap = 3.0):
             if len(candidates) == 0:
                 continue
 
-            # find the closest candidate
-            close_id, _, dst = find_closest(candidates)
+            # find the nearest candidate
+            nearest_id, _, dst = find_nearest(candidates)
 
             if dst > max_tracks_gap:
                 continue
 
             # create a link between the current ID and the old_ID
-            links[id] = close_id
+            links[id] = nearest_id
 
         # override tracks based on generated links
         fixed_tracks = {}

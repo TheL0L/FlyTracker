@@ -5,6 +5,7 @@ from data_postprocess import process_data
 from video_postprocess import annotate_video
 import video_preprocess
 import file_helper
+import storage_helper
 
 
 def preprocess_frame(frame):
@@ -82,6 +83,9 @@ def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix
     # read and process data
     raw_data = analyze_video(ft, video_path, preprocess_method)
     processed_data = process_data(raw_data, max_tracks_gap=3)
+
+    # save raw data in storage
+    storage_helper.write_binary_file(video_path, raw_data)
 
     # outputs
     annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)

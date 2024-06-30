@@ -7,15 +7,16 @@ def copy_frame(frame):
     return np.copy(frame)
 
 def construct_paths(data, frame_number, paths = None):
+    # prepare paths variable
+    updated_paths = {} if paths is None else paths
     # construct paths from data
-    if paths is None:
-        paths = {}
-        for f in range(frame_number+1):
-            for track in data[f]:
-                id, conf, x1, y1, x2, y2 = track
-                if id not in paths:
-                    paths[id] = []
-                paths[id].append(helper.get_center(x1, y1, x2, y2))
+    for f in range(frame_number+1):
+        for track in data[f]:
+            id, conf, x1, y1, x2, y2 = track
+            if id not in updated_paths:
+                updated_paths[id] = []
+            updated_paths[id].append(helper.get_center(x1, y1, x2, y2))
+    return updated_paths
 
 def draw_paths_onto_frame(frame_data, frame, paths = None):
     # annotate active paths with corresponding IDs

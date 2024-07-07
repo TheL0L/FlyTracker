@@ -1,7 +1,7 @@
 from FlyTracker import FlyTracker
 import cv2, csv
 from tqdm import tqdm
-from data_postprocess import process_data
+from data_postprocess import process_data, generate_links
 from video_postprocess import annotate_video
 import video_preprocess
 import file_helper
@@ -82,7 +82,8 @@ def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix
 
     # read and process data
     raw_data = analyze_video(ft, video_path, preprocess_method)
-    processed_data = process_data(raw_data, max_tracks_gap=3)
+    links = generate_links(raw_data, max_tracks_gap=3)
+    processed_data = process_data(raw_data, links)
 
     # save raw data in storage
     storage_helper.write_binary_file(video_path, raw_data)

@@ -94,15 +94,17 @@ def update_frame():
     ROOT_WINDOW.after(PLAYBACK_DELAY_MS, update_frame)
 
 def auto_process():
-    global PROCESSED_DATA, gap_entry
+    global PROCESSED_DATA, LINKS, gap_entry
     try:
         gap = int(gap_entry.get())
     except:
         pass
-    PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, gap)
+    LINKS = data_postprocess.generate_links(STORED_RAW_DATA, gap)
+    PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
 
 
 # read raw data from flytracker storage file
+LINKS = {}
 PROCESSED_DATA = None
 STORED_RAW_DATA = storage_helper.read_binary_file(__INPUT_VIDEO)
 if STORED_RAW_DATA[0] == True:

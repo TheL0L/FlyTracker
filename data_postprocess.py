@@ -31,13 +31,7 @@ def find_nearest(results):
     return results[min_index]
 
 
-def process_data(data, max_tracks_gap = 3.0):
-    # track = tuple( id, conf, x1, y1, x2, y2 )
-    # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
-    
-    # prepare variable for storing the processed data
-    result = {0: []}
-
+def generate_links(data, max_tracks_gap = 3.0):
     # prepare a dictionary for linking swapped IDs
     links = {}  # {swapped: original}
 
@@ -50,7 +44,6 @@ def process_data(data, max_tracks_gap = 3.0):
         # skip if last frame had no tracks
         if len(last_frame_tracks) == 0:
             last_frame_tracks = tracks      # update last_tracks to current_tracks
-            result[frame_number] = tracks   # append frame to results
             continue
         
         # skip if current frame has no new IDs
@@ -59,7 +52,6 @@ def process_data(data, max_tracks_gap = 3.0):
         cur_ids = get_ids(tracks)
         if len(cur_ids.difference(old_ids)) == 0:
             last_frame_tracks = tracks      # update last_tracks to current_tracks
-            result[frame_number] = tracks   # append frame to results
             continue
 
         # iterate over tracks, in search for new IDs
@@ -86,6 +78,22 @@ def process_data(data, max_tracks_gap = 3.0):
 
             # create a link between the current ID and the old_ID
             links[id] = nearest_id
+        # update last_tracks to current_tracks
+        last_frame_tracks = tracks
+    return links
+
+
+def process_data(data, links):
+    # track = tuple( id, conf, x1, y1, x2, y2 )
+    # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
+    
+    # prepare variable for storing the processed data
+    result = {}
+
+    # iterate over the data, replacing swapped IDs
+    for frame_number in range(0, len(data)):
+        # pull current frame tracks
+        tracks = data[frame_number]
 
         # override tracks based on generated links
         fixed_tracks = {}
@@ -95,7 +103,6 @@ def process_data(data, max_tracks_gap = 3.0):
                 id = links[id]
             fixed_tracks[id] = (id, conf, x1, y1, x2, y2)
 
-        last_frame_tracks = fixed_tracks.values()      # update last_tracks to current_tracks
-        result[frame_number] = fixed_tracks.values()   # append processed frame to results
-
+        # append processed frame to results
+        result[frame_number] = fixed_tracks.values()
     return result

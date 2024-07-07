@@ -1,5 +1,4 @@
 import math
-from tqdm import tqdm
 from helper import get_center
 
 
@@ -42,12 +41,8 @@ def process_data(data, max_tracks_gap = 3.0):
     # prepare a dictionary for linking swapped IDs
     links = {}  # {swapped: original}
 
-    # setup progress bar
-    progress_bar = tqdm(total=len(data), desc='Processing Progress', unit='frame')
-
     # iterate over the data, in search for tracks that might be combined due to gaining new IDs
     last_frame_tracks = data[0]
-    progress_bar.update()
     for frame_number in range(1, len(data)):
         # pull current frame tracks
         tracks = data[frame_number]
@@ -56,7 +51,6 @@ def process_data(data, max_tracks_gap = 3.0):
         if len(last_frame_tracks) == 0:
             last_frame_tracks = tracks      # update last_tracks to current_tracks
             result[frame_number] = tracks   # append frame to results
-            progress_bar.update()
             continue
         
         # skip if current frame has no new IDs
@@ -66,7 +60,6 @@ def process_data(data, max_tracks_gap = 3.0):
         if len(cur_ids.difference(old_ids)) == 0:
             last_frame_tracks = tracks      # update last_tracks to current_tracks
             result[frame_number] = tracks   # append frame to results
-            progress_bar.update()
             continue
 
         # iterate over tracks, in search for new IDs
@@ -104,7 +97,5 @@ def process_data(data, max_tracks_gap = 3.0):
 
         last_frame_tracks = fixed_tracks.values()      # update last_tracks to current_tracks
         result[frame_number] = fixed_tracks.values()   # append processed frame to results
-        progress_bar.update()
 
-    progress_bar.close()
     return result

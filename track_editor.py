@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
+from tkinter import simpledialog
 import cv2
 from PIL import Image, ImageTk
 import storage_helper
@@ -100,8 +101,64 @@ def auto_process():
     except:
         pass
     LINKS = data_postprocess.generate_links(STORED_RAW_DATA, gap)
+    populate_links()
     PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
 
+def populate_links():
+    global links_listbox
+    links_listbox.delete(0, tk.END)
+    for swapped, actual in LINKS.items():
+        links_listbox.insert(tk.END, f'{swapped:<5}->{actual:>5}')
+
+def list_add():
+    global LINKS, PROCESSED_DATA, links_listbox
+    first = simpledialog.askinteger("Input", "Enter the first ID:")
+    if first is None:
+        return
+    second = simpledialog.askinteger("Input", "Enter the second ID:")
+    if second is None:
+        return
+    
+    swapped = max(first, second)
+    actual  = min(first, second)
+    LINKS[swapped] = actual
+    populate_links()
+    PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
+
+def list_edt():
+    global LINKS, PROCESSED_DATA, links_listbox
+    selected_index = links_listbox.curselection()
+    if not selected_index:
+        return
+    
+    current_value: str = links_listbox.get(selected_index)
+    swapped, actual = current_value.replace('->', ' ').split(maxsplit=2)
+    swapped, actual = int(swapped), int(actual)
+    
+    first = simpledialog.askinteger("Input", "Enter the first ID:", initialvalue=swapped)
+    if first is None:
+        return
+    second = simpledialog.askinteger("Input", "Enter the second ID:", initialvalue=actual)
+    if second is None:
+        return
+    
+    del LINKS[swapped]
+    swapped = max(first, second)
+    actual  = min(first, second)
+    LINKS[swapped] = actual
+    populate_links()
+    PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
+
+def list_del():
+    global LINKS, PROCESSED_DATA, links_listbox
+    selected_index = links_listbox.curselection()
+    if not selected_index:
+        return
+    current_value: str = links_listbox.get(selected_index)
+    swapped, actual = current_value.replace('->', ' ').split(maxsplit=2)
+    del LINKS[int(swapped)]
+    populate_links()
+    PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
 
 # read raw data from flytracker storage file
 LINKS = {}
@@ -195,8 +252,6 @@ links_label = tk.Label(LINKS_FRAME, text='Links:')
 links_label.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=5)
 
 links_listbox = tk.Listbox(LINKS_FRAME)
-for i in range(10):
-    links_listbox.insert(tk.END, f'{(i+2)**2:<5} -> {i:<5}')
 links_listbox.grid(row=1, column=0, columnspan=2, sticky=tk.EW)
 
 
@@ -208,6 +263,19 @@ gap_entry.grid(row=2, column=1, sticky=tk.W, padx=5, pady=5)
 
 auto_button = tk.Button(LINKS_FRAME, text="Automatically find links", command=auto_process)
 auto_button.grid(row=3, column=0, columnspan=2, sticky=tk.EW, padx=5, pady=5)
+
+
+LINK_BUTTONS_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=DATA_CONTROL_FRAME.cget('bg'))
+LINK_BUTTONS_FRAME.grid(row=0, column=1)
+
+list_add_button = tk.Button(LINK_BUTTONS_FRAME, text="Add link", command=list_add)
+list_add_button.grid(row=0, column=0, sticky=tk.EW, padx=5, pady=5)
+
+list_edt_button = tk.Button(LINK_BUTTONS_FRAME, text="Edit link", command=list_edt)
+list_edt_button.grid(row=1, column=0, sticky=tk.EW, padx=5, pady=5)
+
+list_del_button = tk.Button(LINK_BUTTONS_FRAME, text="Remove link", command=list_del)
+list_del_button.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
 
 
 # Add event listeners

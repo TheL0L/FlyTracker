@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import numpy as np
+from tkinter import font
 import cv2
 from PIL import Image, ImageTk
 import storage_helper
@@ -125,6 +125,10 @@ PLAYBACK_DELAY_MS = int(1000 / VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
 ROOT_WINDOW = tk.Tk()
 ROOT_WINDOW.title("Effect Preview")
 ROOT_WINDOW.state('zoomed')
+
+# Set the default font for all widgets
+monospace_font = font.Font(family='Courier', size=12)
+ROOT_WINDOW.option_add("*Font", monospace_font)
 
 
 # Create the left and right frames

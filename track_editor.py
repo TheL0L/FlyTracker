@@ -71,7 +71,7 @@ def update_frame():
     read_zoom_from_controls()
     read_speed_from_controls()
 
-    fly_paths = video_postprocess.construct_paths(PROCESSED_DATA, frame_number)
+    fly_paths = video_postprocess.construct_paths(PROCESSED_DATA, frame_number, start_frame=0)
     adjusted_frame = video_postprocess.copy_frame(frame)
     video_postprocess.draw_paths_onto_frame(PROCESSED_DATA[frame_number], adjusted_frame, fly_paths)
 

@@ -6,11 +6,12 @@ import numpy as np
 def copy_frame(frame):
     return np.copy(frame)
 
-def construct_paths(data, frame_number, paths = None):
-    # prepare paths variable
+def construct_paths(data, end_frame, paths = None, start_frame = None):
+    # prepare variables
     updated_paths = {} if paths is None else paths
+    start_frame = end_frame if start_frame is None else start_frame
     # construct paths from data
-    for f in range(frame_number+1):
+    for f in range(start_frame, end_frame+1):
         for track in data[f]:
             id, conf, x1, y1, x2, y2 = track
             if id not in updated_paths:

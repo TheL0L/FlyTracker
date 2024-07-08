@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import font
 from tkinter import simpledialog
-import cv2
+import cv2, re
 from PIL import Image, ImageTk
 import storage_helper
 import data_postprocess
@@ -112,15 +112,13 @@ def populate_links():
 
 def list_add():
     global LINKS, PROCESSED_DATA, links_listbox
-    first = simpledialog.askinteger("Input", "Enter the first ID:")
-    if first is None:
-        return
-    second = simpledialog.askinteger("Input", "Enter the second ID:")
-    if second is None:
+    ans = simpledialog.askstring("Input", "Enter 2 IDs to merge:")
+    if ans is None:
         return
     
-    swapped = max(first, second)
-    actual  = min(first, second)
+    ids = [int(num) for num in re.findall(r'\d+', ans)]
+
+    swapped, actual = max(ids), min(ids)
     LINKS[swapped] = actual
     populate_links()
     PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
@@ -135,16 +133,14 @@ def list_edt():
     swapped, actual = current_value.replace('->', ' ').split(maxsplit=2)
     swapped, actual = int(swapped), int(actual)
     
-    first = simpledialog.askinteger("Input", "Enter the first ID:", initialvalue=swapped)
-    if first is None:
-        return
-    second = simpledialog.askinteger("Input", "Enter the second ID:", initialvalue=actual)
-    if second is None:
+    ans = simpledialog.askstring("Input", "Enter 2 IDs to merge:", initialvalue=f'{swapped} {actual}')
+    if ans is None:
         return
     
+    ids = [int(num) for num in re.findall(r'\d+', ans)]
+
     del LINKS[swapped]
-    swapped = max(first, second)
-    actual  = min(first, second)
+    swapped, actual = max(ids), min(ids)
     LINKS[swapped] = actual
     populate_links()
     PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)

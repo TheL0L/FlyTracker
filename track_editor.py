@@ -7,8 +7,13 @@ from PIL import Image, ImageTk
 import storage_helper
 import data_postprocess
 import video_postprocess
+import file_helper
 
 __INPUT_VIDEO = './showcase/4_short.avi'
+__OUTPUT_ROOT_PATH = file_helper.normalize_path('./showcase/result')
+
+__PREFIX = ''
+__SUFFIX = '_result'
 
 __BACKGROUND_DARK  = '#1E1E1E'
 __BACKGROUND_LIGHT = '#303030'
@@ -156,6 +161,26 @@ def list_del():
     populate_links()
     PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
 
+def export_csv():
+    import app_v2
+    file_helper.prepare_output_path(__OUTPUT_ROOT_PATH)
+    file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
+    file_name = f'{__PREFIX}{file_name}{__SUFFIX}'
+    output_path = file_helper.join_paths(__OUTPUT_ROOT_PATH, file_name)
+
+    # outputs
+    app_v2.write_to_csv(PROCESSED_DATA, f'{output_path}.csv')
+
+def export_mp4():
+    import video_postprocess
+    file_helper.prepare_output_path(__OUTPUT_ROOT_PATH)
+    file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
+    file_name = f'{__PREFIX}{file_name}{__SUFFIX}'
+    output_path = file_helper.join_paths(__OUTPUT_ROOT_PATH, file_name)
+
+    # outputs  # TODO: save model constraints?
+    video_postprocess.annotate_video(PROCESSED_DATA, __INPUT_VIDEO, f'{output_path}.mp4', None, False)
+
 # read raw data from flytracker storage file
 LINKS = {}
 PROCESSED_DATA = None
@@ -211,7 +236,13 @@ CONTROL_SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
 CONTROL_SPACING_FRAME.pack(fill=tk.X, expand=False)
 
 DATA_CONTROL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
-DATA_CONTROL_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
+DATA_CONTROL_FRAME.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+CONTROL_SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
+CONTROL_SPACING_FRAME.pack(fill=tk.X, expand=False)
+
+EXPORT_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
+EXPORT_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
 
 # Add buttons to control preview
 controls_label = ttk.Label(PREVIEW_CONTROL_FRAME, text='Preview controls:')
@@ -272,6 +303,18 @@ list_edt_button.grid(row=1, column=0, sticky=tk.EW, padx=5, pady=5)
 
 list_del_button = tk.Button(LINK_BUTTONS_FRAME, text="Remove link", command=list_del)
 list_del_button.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
+
+
+# Add export buttons
+EXPORT_BUTTONS_FRAME = tk.Frame(EXPORT_FRAME, bg=EXPORT_FRAME.cget('bg'))
+EXPORT_BUTTONS_FRAME.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
+
+export_cvs_button = tk.Button(EXPORT_BUTTONS_FRAME, text="Export to CSV", command=export_csv)
+export_cvs_button.grid(row=0, column=0, sticky=tk.SE, padx=5, pady=5)
+
+export_mp4_button = tk.Button(EXPORT_BUTTONS_FRAME, text="Export to MP4", command=export_mp4)
+export_mp4_button.grid(row=0, column=1, sticky=tk.SE, padx=5, pady=5)
+
 
 
 # Add event listeners

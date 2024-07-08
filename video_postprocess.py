@@ -7,6 +7,21 @@ def copy_frame(frame):
     return np.copy(frame)
 
 def construct_paths(data, end_frame, paths = None, start_frame = None):
+    """
+    Constructs and updates paths for tracked objects over a sequence of frames.
+
+    Parameters:
+    data (dict): A dictionary where keys are frame numbers and values are lists of tracks.
+    end_frame (int): The ending frame number up to which paths are constructed.
+    paths (dict, optional): A dictionary to store the paths of tracked objects.
+                            Keys are object IDs and values are lists of (x, y) tuples representing the center of the bounding box.
+                            Defaults to None, in which case a new dictionary is created.
+    start_frame (int, optional): The starting frame number from which paths are constructed.
+                                 Defaults to the value of end_frame if not provided.
+
+    Returns:
+    dict: Updated paths of tracked objects, where keys are object IDs and values are lists of (x, y) tuples.
+    """
     # prepare variables
     updated_paths = {} if paths is None else paths
     start_frame = end_frame if start_frame is None else start_frame

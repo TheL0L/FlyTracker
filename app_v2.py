@@ -1,5 +1,5 @@
 from FlyTracker import FlyTracker
-import cv2, csv
+import cv2
 from tqdm import tqdm
 from data_postprocess import process_data, generate_links
 from video_postprocess import annotate_video
@@ -65,15 +65,6 @@ def analyze_video(fly_tracker, video_path, frame_preprocess_method = None):
     return data
 
 
-def write_to_csv(data, output_path):
-    with open(output_path, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['FRAME_NUMBER', 'ID', 'CONFIDENCE', 'X1', 'Y1', 'X2', 'Y2'])
-        for frame_num, tracks in data.items():
-            for track in tracks:
-                writer.writerow([frame_num, *track])
-
-
 def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix: str, suffix: str, preprocess_method) -> None:
     # prepare output basename
     file_name = file_helper.get_basename_stem(video_path)
@@ -85,12 +76,9 @@ def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix
     links = generate_links(raw_data, max_tracks_gap=3)
     processed_data = process_data(raw_data, links)
 
-    # save raw data in storage
-    storage_helper.write_binary_file(video_path, raw_data)
-
     # outputs
     annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
-    write_to_csv(processed_data, f'{output_path}.csv')
+    storage_helper.write_to_csv(processed_data, f'{output_path}.csv')
 
     # notify the user
     print(f'results saved at:\n\t{output_path}.mp4\n\t{output_path}.csv\n')

@@ -181,16 +181,11 @@ def export_mp4():
     # outputs  # TODO: save model constraints?
     video_postprocess.annotate_video(PROCESSED_DATA, __INPUT_VIDEO, f'{output_path}.mp4', None, False)
 
-# read raw data from flytracker storage file
+# read raw data from csv file
+raw_file = storage_helper.find_raw_data(__INPUT_VIDEO)
 LINKS = {}
 PROCESSED_DATA = None
-STORED_RAW_DATA = storage_helper.read_binary_file(__INPUT_VIDEO)
-if STORED_RAW_DATA[0] == True:
-    STORED_RAW_DATA = STORED_RAW_DATA[1]
-    print('raw data loaded!')
-else:
-    print('could not load raw data!')
-    exit()
+STORED_RAW_DATA = storage_helper.read_from_csv(raw_file) if raw_file is not None else None
 
 # Initialize the video capture
 VIDEO_CAPTURE = cv2.VideoCapture(__INPUT_VIDEO)

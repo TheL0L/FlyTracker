@@ -13,7 +13,7 @@ def normalize_path(file_path: str) -> str:
     Returns:
         str: The normalized file path.
     """
-    return os.path.normpath(file_path)
+    return os.path.normpath(file_path).replace('\\', '/')
 
 def prepare_output_path(output_path: str) -> None:
     """

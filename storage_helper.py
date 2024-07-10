@@ -23,7 +23,7 @@ def read_from_csv(input_path: str) -> dict:
     return data
 
 def decompose_path(path: str) -> dict:
-    norm_path = file_helper.normalize_path(path).replace('\\', '/')
+    norm_path = file_helper.normalize_path(path)
 
     result = {
         'age':                  None,

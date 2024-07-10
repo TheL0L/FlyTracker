@@ -1,5 +1,7 @@
 import math
-from helper import get_center
+
+def get_center(x1, y1, x2, y2):
+    return (x1 + x2)/2, (y1 + y2)/2
 
 
 def get_ids(tracks):

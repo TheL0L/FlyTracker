@@ -79,6 +79,7 @@ def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix
     processed_data = process_data(raw_data, links)
 
     # outputs
+    storage_helper.write_to_csv(raw_data, f'{output_path}_raw.csv')
     annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
     storage_helper.write_to_csv(processed_data, f'{output_path}.csv')
 

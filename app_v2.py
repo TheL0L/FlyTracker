@@ -67,10 +67,9 @@ def analyze_video(fly_tracker, video_path, frame_preprocess_method = None):
     return data
 
 
-def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix: str, suffix: str, preprocess_method) -> None:
+def process_video(ft: FlyTracker, video_path: str, output_root_path: str, preprocess_method) -> None:
     # prepare output basename
     file_name = file_helper.get_basename_stem(video_path)
-    file_name = f'{prefix}{file_name}{suffix}'
     output_path = file_helper.join_paths(output_root_path, file_name)
 
     # read and process data
@@ -80,11 +79,11 @@ def process_video(ft: FlyTracker, video_path: str, output_root_path: str, prefix
 
     # outputs
     storage_helper.write_to_csv(raw_data, f'{output_path}_raw.csv')
-    annotate_video(processed_data, video_path, f'{output_path}.mp4', ft.constraints, True)
-    storage_helper.write_to_csv(processed_data, f'{output_path}.csv')
+    annotate_video(processed_data, video_path, f'{output_path}_result.mp4', ft.constraints, True)
+    storage_helper.write_to_csv(processed_data, f'{output_path}_result.csv')
 
     # notify the user
-    print(f'results saved at:\n\t{output_path}.mp4\n\t{output_path}.csv\n')
+    print(f'results saved at:\n\t{output_path}_result.mp4\n\t{output_path}_result.csv\n\t{output_path}_raw.csv\n')
 
     # reset tracking for next video
     ft.reset_tracking()
@@ -98,9 +97,6 @@ if __name__ == '__main__':
     ]
     output_root_path = file_helper.normalize_path('./showcase/result')
     file_helper.prepare_output_path(output_root_path)
-
-    prefix = ''
-    suffix = '_result'
 
     # setup model
     ft = FlyTracker('./runs/detect/train7/weights/best.pt')
@@ -119,6 +115,6 @@ if __name__ == '__main__':
             print(f'could not locate the video at "{video_path}".')
             continue
         
-        process_video(ft, video_path, output_root_path, prefix, suffix, preprocess_method)
+        process_video(ft, video_path, output_root_path, preprocess_method)
         
     

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
-from tkinter import simpledialog
+from tkinter import simpledialog, filedialog
 import cv2, re
 from PIL import Image, ImageTk
 import storage_helper
@@ -9,14 +9,12 @@ import data_postprocess
 import video_postprocess
 import file_helper
 
-__INPUT_VIDEO = './showcase/4_short.avi'
-__OUTPUT_ROOT_PATH = file_helper.normalize_path('./showcase/result')
-
-__PREFIX = ''
-__SUFFIX = '_result'
+__INPUT_VIDEO = None
 
 __BACKGROUND_DARK  = '#1E1E1E'
 __BACKGROUND_LIGHT = '#303030'
+
+__AWAITING_VIDEO = True
 
 
 def deselect_all_entries(event):
@@ -55,8 +53,47 @@ def read_timeline_value():
     if timeline_pos != int(VIDEO_CAPTURE.get(cv2.CAP_PROP_POS_FRAMES) - 1):
         VIDEO_CAPTURE.set(cv2.CAP_PROP_POS_FRAMES, timeline_pos)
 
+def await_file_opened():
+    global STORED_RAW_DATA, VIDEO_CAPTURE, __AWAITING_VIDEO
+    global VIDEO_TOTAL_FRAMES, IS_PLAYING, PLAYBACK_DELAY_MS, timeline_slider
+
+    if __INPUT_VIDEO is not None:
+        # read raw data from csv file
+        raw_file = storage_helper.find_raw_data(__INPUT_VIDEO)
+        STORED_RAW_DATA = storage_helper.read_from_csv(raw_file) if raw_file is not None else None
+
+        if STORED_RAW_DATA is not None:
+            # Initialize the video capture
+            VIDEO_CAPTURE = cv2.VideoCapture(__INPUT_VIDEO)
+            VIDEO_TOTAL_FRAMES = int(VIDEO_CAPTURE.get(cv2.CAP_PROP_FRAME_COUNT))
+            IS_PLAYING = True
+            PLAYBACK_DELAY_MS = int(1000 / VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
+            timeline_slider.config(to=VIDEO_TOTAL_FRAMES)
+
+            # Enable elements after a video has loaded
+            toggle_all_widgets(RIGHT_FRAME, True)
+            toggle_all_widgets(PREVIEW_CONTROL_FRAME, True)
+            toggle_all_widgets(DATA_CONTROL_FRAME, True)
+            toggle_all_widgets(EXPORT_BUTTONS_FRAME, True)
+
+            __AWAITING_VIDEO = False
+
+            auto_process()
+            # Start the frame update loop
+            update_frame()
+            return
+        else:
+            # TODO: run model
+            print('run model first')
+            pass
+    # Call this function again after some delay
+    ROOT_WINDOW.after(100, await_file_opened)
+
 def update_frame():
     global VIDEO_CAPTURE, preview_panel, merged_frame, timeline_slider
+
+    if __AWAITING_VIDEO:
+        return
 
     read_timeline_value()
 
@@ -180,18 +217,67 @@ def export_mp4():
     # outputs  # TODO: save model constraints?
     video_postprocess.annotate_video(PROCESSED_DATA, __INPUT_VIDEO, f'{output_path}_result.mp4', None, False)
 
+def toggle_all_widgets(frame, state: bool):
+    for child in frame.winfo_children():
+        if child.winfo_children():
+            toggle_all_widgets(child, state)
+        try:
+            child.config(state=tk.NORMAL if state else tk.DISABLED)
+        except tk.TclError:
+            pass
+
+def import_video():
+    global __INPUT_VIDEO, import_avi_button
+
+    file_path = filedialog.askopenfilename(
+        title="Select a Video File",
+        filetypes=(("Video files", "*.avi"), ("All files", "*.*"))
+    )
+    if file_path is not None and file_path != '':
+        import_avi_button.config(state=tk.DISABLED)
+        __INPUT_VIDEO = file_path
+
+def reset_variables():
+    global __INPUT_VIDEO
+    global LINKS, PROCESSED_DATA, STORED_RAW_DATA, VIDEO_CAPTURE, VIDEO_TOTAL_FRAMES
+    global IS_PLAYING, ZOOM_SCALAR, PLAYBACK_DELAY_MS, timeline_slider, preview_panel
+    __INPUT_VIDEO = None
+    LINKS = {}
+    PROCESSED_DATA = None
+    STORED_RAW_DATA = None
+    if VIDEO_CAPTURE is not None:
+        VIDEO_CAPTURE.release()
+    VIDEO_CAPTURE = None
+    VIDEO_TOTAL_FRAMES = 0
+    IS_PLAYING = False
+    ZOOM_SCALAR = 2.2
+    PLAYBACK_DELAY_MS = 100
+    timeline_slider.config(to=0)
+    preview_panel.imgtk = None
+    preview_panel.config(image=None)
+    import_avi_button.config(state=tk.NORMAL)
+    return
+
+def reset_app():
+    global __AWAITING_VIDEO
+    reset_variables()
+
+    if not __AWAITING_VIDEO:
+        __AWAITING_VIDEO = True
+        await_file_opened()
+    return
+
 # read raw data from csv file
-raw_file = storage_helper.find_raw_data(__INPUT_VIDEO)
 LINKS = {}
 PROCESSED_DATA = None
-STORED_RAW_DATA = storage_helper.read_from_csv(raw_file) if raw_file is not None else None
+STORED_RAW_DATA = None
 
 # Initialize the video capture
-VIDEO_CAPTURE = cv2.VideoCapture(__INPUT_VIDEO)
-VIDEO_TOTAL_FRAMES = int(VIDEO_CAPTURE.get(cv2.CAP_PROP_FRAME_COUNT))
-IS_PLAYING = True
+VIDEO_CAPTURE = None
+VIDEO_TOTAL_FRAMES = 0
+IS_PLAYING = False
 ZOOM_SCALAR = 2.2
-PLAYBACK_DELAY_MS = int(1000 / VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
+PLAYBACK_DELAY_MS = 100
 
 # Initialize tk window
 ROOT_WINDOW = tk.Tk()
@@ -235,8 +321,8 @@ DATA_CONTROL_FRAME.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 CONTROL_SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
 CONTROL_SPACING_FRAME.pack(fill=tk.X, expand=False)
 
-EXPORT_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
-EXPORT_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
+EXTERNAL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
+EXTERNAL_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
 
 # Add buttons to control preview
 controls_label = ttk.Label(PREVIEW_CONTROL_FRAME, text='Preview controls:')
@@ -300,7 +386,7 @@ list_del_button.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
 
 
 # Add export buttons
-EXPORT_BUTTONS_FRAME = tk.Frame(EXPORT_FRAME, bg=EXPORT_FRAME.cget('bg'))
+EXPORT_BUTTONS_FRAME = tk.Frame(EXTERNAL_FRAME, bg=EXTERNAL_FRAME.cget('bg'))
 EXPORT_BUTTONS_FRAME.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
 export_cvs_button = tk.Button(EXPORT_BUTTONS_FRAME, text="Export to CSV", command=export_csv)
@@ -309,17 +395,31 @@ export_cvs_button.grid(row=0, column=0, sticky=tk.SE, padx=5, pady=5)
 export_mp4_button = tk.Button(EXPORT_BUTTONS_FRAME, text="Export to MP4", command=export_mp4)
 export_mp4_button.grid(row=0, column=1, sticky=tk.SE, padx=5, pady=5)
 
+# Add import button
+IMPORT_BUTTONS_FRAME = tk.Frame(EXTERNAL_FRAME, bg=EXTERNAL_FRAME.cget('bg'))
+IMPORT_BUTTONS_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+
+import_avi_button = tk.Button(IMPORT_BUTTONS_FRAME, text="Import Video", command=import_video)
+import_avi_button.grid(row=0, column=0, sticky=tk.SE, padx=5, pady=5)
+
+reset_app_button = tk.Button(IMPORT_BUTTONS_FRAME, text="Reset", command=reset_app)
+reset_app_button.grid(row=0, column=1, sticky=tk.SE, padx=5, pady=5)
 
 
 # Add event listeners
 ROOT_WINDOW.bind("<Button-1>", deselect_all_entries)
 
-auto_process()
-# Start the frame update loop
-update_frame()
+# Disable elements until loaded a video
+toggle_all_widgets(RIGHT_FRAME, False)
+toggle_all_widgets(PREVIEW_CONTROL_FRAME, False)
+toggle_all_widgets(DATA_CONTROL_FRAME, False)
+toggle_all_widgets(EXPORT_BUTTONS_FRAME, False)
+
+await_file_opened()
 
 # Start the tk event loop
 ROOT_WINDOW.mainloop()
 
 # Release the video capture object
-VIDEO_CAPTURE.release()
+if VIDEO_CAPTURE is not None:
+    VIDEO_CAPTURE.release()

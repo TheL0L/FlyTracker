@@ -53,9 +53,7 @@ def analyze_video(fly_tracker, video_path, frame_preprocess_method = None):
         data[progress_bar.n] = []
 
         for track in tracks:
-            id, conf, x1, y1, x2, y2 = track
-            rounded_track = id, conf, round(x1), round(y1), round(x2), round(y2)
-            data[progress_bar.n].append(rounded_track)
+            data[progress_bar.n].append(track)
 
         progress_bar.update()
         success, frame = stream.read()

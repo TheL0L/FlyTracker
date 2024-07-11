@@ -162,24 +162,23 @@ def list_del():
     PROCESSED_DATA = data_postprocess.process_data(STORED_RAW_DATA, LINKS)
 
 def export_csv():
-    import app_v2
-    file_helper.prepare_output_path(__OUTPUT_ROOT_PATH)
+    video_file   = file_helper.get_basename(__INPUT_VIDEO)
+    video_folder = __INPUT_VIDEO.replace(video_file, '')
     file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
-    file_name = f'{__PREFIX}{file_name}{__SUFFIX}'
-    output_path = file_helper.join_paths(__OUTPUT_ROOT_PATH, file_name)
+    output_path = file_helper.join_paths(video_folder, file_name)
 
     # outputs
-    app_v2.write_to_csv(PROCESSED_DATA, f'{output_path}.csv')
+    storage_helper.write_to_csv(PROCESSED_DATA, f'{output_path}_result.csv')
 
 def export_mp4():
     import video_postprocess
-    file_helper.prepare_output_path(__OUTPUT_ROOT_PATH)
+    video_file   = file_helper.get_basename(__INPUT_VIDEO)
+    video_folder = __INPUT_VIDEO.replace(video_file, '')
     file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
-    file_name = f'{__PREFIX}{file_name}{__SUFFIX}'
-    output_path = file_helper.join_paths(__OUTPUT_ROOT_PATH, file_name)
+    output_path = file_helper.join_paths(video_folder, file_name)
 
     # outputs  # TODO: save model constraints?
-    video_postprocess.annotate_video(PROCESSED_DATA, __INPUT_VIDEO, f'{output_path}.mp4', None, False)
+    video_postprocess.annotate_video(PROCESSED_DATA, __INPUT_VIDEO, f'{output_path}_result.mp4', None, False)
 
 # read raw data from csv file
 raw_file = storage_helper.find_raw_data(__INPUT_VIDEO)

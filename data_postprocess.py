@@ -103,6 +103,8 @@ def process_data(data, links):
             id, conf, x1, y1, x2, y2 = track
             if id in links.keys():
                 id = links[id]
+            if id == 0:
+                continue
             fixed_tracks[id] = (id, conf, x1, y1, x2, y2)
 
         # append processed frame to results

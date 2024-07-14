@@ -35,26 +35,6 @@ class FlyTracker:
         self.detector.to(self.__device)
 
         self.confidence_threshold = max(min(confidence_threshold, 1), 0)
-        self.constraints = {'x_min': None, 'x_max': None, 'y_min': None, 'y_max': None}
-
-    def set_constraints(self, x_min=None, x_max=None, y_min=None, y_max=None) -> None:
-        """
-        Set constraints for filtering tracked objects based on their coordinates.
-
-        Args:
-            x_min (float, optional): Minimum x-coordinate. Defaults to None.
-            x_max (float, optional): Maximum x-coordinate. Defaults to None.
-            y_min (float, optional): Minimum y-coordinate. Defaults to None.
-            y_max (float, optional): Maximum y-coordinate. Defaults to None.
-        """
-        if x_min is not None:
-            self.constraints['x_min'] = x_min
-        if x_max is not None:
-            self.constraints['x_max'] = x_max
-        if y_min is not None:
-            self.constraints['y_min'] = y_min
-        if y_max is not None:
-            self.constraints['y_max'] = y_max
 
     @staticmethod
     def __yolo2sort(yolo_result) -> tuple:
@@ -85,26 +65,6 @@ class FlyTracker:
         x2, y2 = x1 + w, y1 + h
         return int(track.track_id), track.get_det_conf(), x1, y1, x2, y2
 
-    def __apply_constraints(self, track) -> bool:
-        """
-        Apply constraints to a tracked object.
-
-        Args:
-            track: Tracked object.
-
-        Returns:
-            bool: True if the tracked object satisfies the constraints, False otherwise.
-        """
-        _, _, x1, y1, x2, y2 = track
-        mid_x = (x1 + x2) / 2
-        mid_y = (y1 + y2) / 2
-        return (
-            ((self.constraints['x_min'] is None) or (mid_x >= self.constraints['x_min'])) and
-            ((self.constraints['x_max'] is None) or (mid_x <= self.constraints['x_max'])) and
-            ((self.constraints['y_min'] is None) or (mid_y >= self.constraints['y_min'])) and
-            ((self.constraints['y_max'] is None) or (mid_y <= self.constraints['y_max']))
-        )
-
     def detect(self, frame) -> list:
         """
         Detect and track flies in a frame.
@@ -134,7 +94,6 @@ class FlyTracker:
         # reformat the tracking results
         tracks = [self.__sort2result(t) for t in tracks]
 
-        tracks = filter(lambda t: self.__apply_constraints(t), tracks)
         return list(tracks)
 
     def reset_tracking(self) -> None:

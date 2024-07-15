@@ -8,6 +8,9 @@ model_tracking/
 runs/
 showcase/
 
+build/
+dist/
+
 *.pt
 *.csv
 *.mp4
@@ -15,3 +18,5 @@ showcase/
 
 effect_previews/
 testing_snap.png
+
+*.spec

@@ -3,10 +3,12 @@ import csv
 import re
 
 def write_to_csv(data: dict, output_path: str):
+    # make sure data is sorted
+    sorted_data = {k: data[k] for k in sorted(data.keys())}
     with open(output_path, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['FRAME_NUMBER', 'ID', 'CONFIDENCE', 'X1', 'Y1', 'X2', 'Y2'])
-        for frame_num, tracks in data.items():
+        for frame_num, tracks in sorted_data.items():
             if len(tracks) == 0:
                 writer.writerow([frame_num])
             for track in tracks:

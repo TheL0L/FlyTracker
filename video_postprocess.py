@@ -76,7 +76,7 @@ def construct_paths(data, end_frame, paths = None, start_frame = None):
             updated_paths[id].append(tuple(np.int32([(x1 + x2) / 2, (y1 + y2) / 2])))
     return updated_paths
 
-def draw_paths_onto_frame(frame_data, frame, paths = None):
+def draw_paths_onto_frame(frame_data, frame, paths):
     """
     Draws the paths and annotations onto the frame.
 
@@ -120,17 +120,10 @@ def draw_constraints_onto_frame(frame, constraints):
     constraints (dict): A dictionary containing the constraint values for x and y coordinates.
                         Keys are 'x_min', 'x_max', 'y_min', 'y_max'.
     """
-    # get frame shape
-    width, height, _ = frame.shape
-    # draw constraints rectangle
-    x1 = constraints['x_min'] if constraints['x_min'] is not None else 0
-    x2 = constraints['x_max'] if constraints['x_max'] is not None else width - 1
-    y1 = constraints['y_min'] if constraints['y_min'] is not None else 0
-    y2 = constraints['y_max'] if constraints['y_max'] is not None else height - 1
     cv2.rectangle(
         img=        frame,
-        pt1=        tuple(np.int32([x1, y1])),
-        pt2=        tuple(np.int32([x1, y1])),
+        pt1=        tuple(np.int32([constraints['x_min'], constraints['y_min']])),
+        pt2=        tuple(np.int32([constraints['x_max'], constraints['y_max']])),
         color=      (0, 0, 255),
         thickness=  1
     )

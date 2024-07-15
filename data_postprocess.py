@@ -1,5 +1,9 @@
 import math
 
+def clamp(value, _min, _max):
+    return max(_min, min(value, _max))
+
+
 def get_center(x1, y1, x2, y2):
     return (x1 + x2)/2, (y1 + y2)/2
 

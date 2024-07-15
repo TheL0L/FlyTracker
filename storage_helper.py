@@ -38,7 +38,7 @@ def decompose_path(path: str) -> dict:
         'testing date':         None,
         'group':                None,
         'technical repetition': None,
-        'vile':                 None,
+        'vial':                 None,
     }
     regex = re.compile(r'.*NGT-SCE/NGT_mating_\d+\.\d+\.\d+/(\d+)d(\d{8})_(\d{8})_NGT/.+/(\d+)_\d{8}_1\.(\d+)_start_v([1-5])\.avi$')
 

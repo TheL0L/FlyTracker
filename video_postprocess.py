@@ -1,5 +1,4 @@
 import cv2
-from tqdm import tqdm
 import numpy as np
 
 def id_to_color(id):
@@ -154,17 +153,11 @@ def annotate_video(data, video_path, output_path, constraints = None, draw_const
         (width, height)
     )
 
-    # setup progress bar
-    frames_count = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
-    progress_bar = tqdm(total=frames_count, desc='Annotation Progress', unit='frame')
-
     # prepare a variable to hold the paths
     paths = {}
 
+    frame_number = 0
     while success:
-        # get current frame number
-        frame_number = progress_bar.n
-
         construct_paths(data, frame_number, paths)
 
         # draw a frame counter
@@ -186,9 +179,8 @@ def annotate_video(data, video_path, output_path, constraints = None, draw_const
 
         writer.write(frame)
 
-        progress_bar.update()
+        frame_number += 1
         success, frame = stream.read()
     
-    progress_bar.close()
     stream.release()
     writer.release()

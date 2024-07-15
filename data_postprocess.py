@@ -85,6 +85,27 @@ def generate_links(data, max_tracks_gap = 3.0):
     return links
 
 
+def apply_constraints(data, constraints):
+    result = {}
+
+    for frame_number in range(0, len(data)):
+        tracks = data[frame_number]
+
+        trimmed_tracks = {}
+        for track in tracks:
+            id, conf, x1, y1, x2, y2 = track
+            if (not (constraints['x_min'] <= x1 <= constraints['x_max']) or
+                not (constraints['x_min'] <= x2 <= constraints['x_max']) or
+                not (constraints['y_min'] <= y1 <= constraints['y_max']) or
+                not (constraints['y_min'] <= y2 <= constraints['y_max'])):
+                continue
+            trimmed_tracks[id] = (id, conf, x1, y1, x2, y2)
+
+        # append processed frame to results
+        result[frame_number] = trimmed_tracks.values()
+    return result
+
+
 def process_data(data, links):
     # track = tuple( id, conf, x1, y1, x2, y2 )
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }

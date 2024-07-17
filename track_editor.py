@@ -7,7 +7,6 @@ from PIL import Image, ImageTk
 import storage_helper
 import data_postprocess
 import video_postprocess
-import file_helper
 import threading, time, subprocess
 
 __INPUT_VIDEO = None
@@ -251,10 +250,8 @@ def list_del():
     process_data()
 
 def export_csv():
-    video_file   = file_helper.get_basename(__INPUT_VIDEO)
-    video_folder = __INPUT_VIDEO.replace(video_file, '')
-    file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
-    output_path = file_helper.join_paths(video_folder, file_name)
+    # prepare output basename
+    output_path = storage_helper.get_prepared_path(__INPUT_VIDEO)
     try:
         storage_helper.write_to_csv(TRIMMED_DATA, f'{output_path}_result.csv')
         messagebox.showinfo('Success', f'Exported file to:\n{output_path}_result.csv')
@@ -262,10 +259,8 @@ def export_csv():
         messagebox.showerror('Error', 'Failed to export CSV file!')
 
 def export_mp4():
-    video_file   = file_helper.get_basename(__INPUT_VIDEO)
-    video_folder = __INPUT_VIDEO.replace(video_file, '')
-    file_name = file_helper.get_basename_stem(__INPUT_VIDEO)
-    output_path = file_helper.join_paths(video_folder, file_name)
+    # prepare output basename
+    output_path = storage_helper.get_prepared_path(__INPUT_VIDEO)
     try:
         video_postprocess.annotate_video(TRIMMED_DATA, __INPUT_VIDEO, f'{output_path}_result.mp4', None, False)
         messagebox.showinfo('Success', f'Exported file to:\n{output_path}_result.mp4')

@@ -32,12 +32,11 @@ def read_from_csv(input_path: str) -> dict:
 
 def find_raw_data(video_path: str) -> str:
     """Find a path to the raw csv of a given video."""
-
-    video_file   = file_helper.get_basename(video_path)
-    video_folder = video_path.replace(video_file, '')
-
-    video_file   = file_helper.get_basename_stem(video_path)
-    raw_csv      = file_helper.join_paths(video_folder, f'{video_file}_raw.csv')
-
+    raw_csv = f'{get_prepared_path(video_path)}_raw.csv'
     return raw_csv if file_helper.check_existance(raw_csv) else None
 
+def get_prepared_path(video_path: str) -> str:
+    video_file   = file_helper.get_basename(video_path)
+    video_folder = video_path.replace(video_file, '')
+    video_file   = file_helper.get_basename_stem(video_path)
+    return file_helper.join_paths(video_folder, video_file)

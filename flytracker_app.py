@@ -80,10 +80,7 @@ def analyze_video(fly_tracker: FlyTracker, video_path: str, start_frame, end_fra
 
 def process_video(ft: FlyTracker, video_path: str, start_frame, end_frame, preprocess_method) -> None:
     # prepare output basename
-    video_file   = file_helper.get_basename(video_path)
-    video_folder = video_path.replace(video_file, '')
-    file_name = file_helper.get_basename_stem(video_path)
-    output_path = file_helper.join_paths(video_folder, file_name)
+    output_path = storage_helper.get_prepared_path(video_path)
 
     # read and process data
     raw_data = analyze_video(ft, video_path, start_frame, end_frame, preprocess_method)

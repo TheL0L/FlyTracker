@@ -52,13 +52,11 @@ def analyze_video(fly_tracker: FlyTracker, video_path: str, start_frame, end_fra
         frame_preprocess_method = lambda f: f
 
     # setup progress bar
-    frames_count = end_frame - start_frame
-    progress_bar = tqdm(total=frames_count, desc='Analysis Progress', unit='frame')
-
-    frame_number = start_frame
-
     # iterate over video frames, and append tracks to the data variable
-    while success and frame_number < end_frame:
+    for frame_number in tqdm(range(start_frame, end_frame), desc='Analysis Progress', unit='frame', dynamic_ncols=True):
+        if not success:
+            print(f'Failed to read frame {frame_number} from {video_path}')
+            break
         frame = frame_preprocess_method(frame)
         tracks = fly_tracker.detect(frame)
 
@@ -67,12 +65,9 @@ def analyze_video(fly_tracker: FlyTracker, video_path: str, start_frame, end_fra
         for track in tracks:
             data[frame_number].append(track)
 
-        frame_number += 1
-        progress_bar.update()
         success, frame = stream.read()
     
     # close streams and progress bars
-    progress_bar.close()
     stream.release()
 
     return data

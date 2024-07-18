@@ -11,6 +11,8 @@ import threading, time, subprocess
 
 __INPUT_VIDEO = None
 __MODEL_EXE   = './flytracker_app.exe'
+__FRAME_MARGIN  = 20
+__FRAME_GAP  = 10
 
 __BACKGROUND_DARK  = '#1E1E1E'
 __BACKGROUND_LIGHT = '#303030'
@@ -480,7 +482,7 @@ CONSTRAINTS = {
 
 # Initialize tk window
 ROOT_WINDOW = tk.Tk()
-ROOT_WINDOW.title("Effect Preview")
+ROOT_WINDOW.title('Track Editor')
 ROOT_WINDOW.state('zoomed')
 
 # Set the default font for all widgets
@@ -503,46 +505,46 @@ LEFT_FRAME = tk.Frame(ROOT_WINDOW, bg=__BACKGROUND_LIGHT)
 LEFT_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 PREVIEW_CONTROL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
-PREVIEW_CONTROL_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
+PREVIEW_CONTROL_FRAME.pack(fill=tk.BOTH, expand=False, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN)
 
-SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
+SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=__FRAME_GAP)
 SPACING_FRAME.pack(fill=tk.X, expand=False)
 
 FT_CONTROL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
 FT_CONTROL_FRAME.pack(fill=tk.BOTH, expand=False)
 
-SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
+SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=__FRAME_GAP)
 SPACING_FRAME.pack(fill=tk.X, expand=False)
 
 DATA_CONTROL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
 DATA_CONTROL_FRAME.pack(fill=tk.BOTH, expand=True)
 
-SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=10)
+SPACING_FRAME = tk.Frame(LEFT_FRAME, bg=__BACKGROUND_DARK, height=__FRAME_GAP)
 SPACING_FRAME.pack(fill=tk.X, expand=False)
 
 EXTERNAL_FRAME = tk.Frame(LEFT_FRAME, bg=LEFT_FRAME.cget('bg'))
-EXTERNAL_FRAME.pack(fill=tk.BOTH, expand=False, padx=20, pady=20)
+EXTERNAL_FRAME.pack(fill=tk.BOTH, expand=False, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN)
 
 
 # Create FlyTracker sub frames
 MARGINS_FRAME = tk.Frame(FT_CONTROL_FRAME, bg=FT_CONTROL_FRAME.cget('bg'))
-MARGINS_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=20, pady=20)
+MARGINS_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN)
 
-SPACING_FRAME = tk.Frame(FT_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=10)
+SPACING_FRAME = tk.Frame(FT_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=__FRAME_GAP)
 SPACING_FRAME.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
 MODEL_FRAME = tk.Frame(FT_CONTROL_FRAME, bg=FT_CONTROL_FRAME.cget('bg'))
-MODEL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=20, pady=20)
+MODEL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN)
 
 # Create DataControl sub frames
 LINKS_CONTROL_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=DATA_CONTROL_FRAME.cget('bg'))
-LINKS_CONTROL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, expand=False)
+LINKS_CONTROL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN, expand=False)
 
-# SPACING_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=10)  # TODO
+# SPACING_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=__FRAME_GAP)  # TODO
 # SPACING_FRAME.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
 # PATHS_CONTROL_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=DATA_CONTROL_FRAME.cget('bg'))
-# PATHS_CONTROL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=20)
+# PATHS_CONTROL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN)
 
 # Create External sub frames
 IMPORT_BUTTONS_FRAME = tk.Frame(EXTERNAL_FRAME, bg=EXTERNAL_FRAME.cget('bg'))

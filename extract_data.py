@@ -3,6 +3,7 @@ import csv
 import re
 import numpy as np
 import cv2
+import os
 
 __PX2CM = 1 / 25
 
@@ -256,6 +257,12 @@ def extract_findings(results_csv_path: str) -> str:
 
         # [px] -> [cm]
         findings[id]['distance']  = convert_px_to_cm(findings[id]['distance'])
+
+    # delete old export if exists
+    try:
+        os.remove(export_path)
+    except:
+        pass
 
     # export findings
     write_to_csv(findings, data_from_video_path, export_path)

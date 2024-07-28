@@ -149,7 +149,8 @@ def decompose_path(path: str) -> dict:
 
     m = regex.match(norm_path)
     if m is None:
-        return None
+        result['Video Name'] = norm_path
+        return result
 
     date_format = lambda date: f'{date[:2]}/{date[2:4]}/{date[4:]}'
 

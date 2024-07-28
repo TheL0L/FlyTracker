@@ -164,7 +164,7 @@ def decompose_path(path: str) -> dict:
 
     return result
 
-def extract_findings(results_csv_path: str) -> None:
+def extract_findings(results_csv_path: str) -> str:
     """
     Extract findings from a CSV file and write the results to a new CSV file.
 
@@ -259,4 +259,4 @@ def extract_findings(results_csv_path: str) -> None:
 
     # export findings
     write_to_csv(findings, data_from_video_path, export_path)
-
+    return export_path

@@ -8,18 +8,64 @@ __PX2CM = 1 / 25
 
 
 def convert_px_to_cm(length: float) -> float:
+    """
+    Convert length from pixels to centimeters.
+    
+    Args:
+        length (float): Length in pixels.
+
+    Returns:
+        float: Length in centimeters.
+    """
     return length * __PX2CM
 
 def convert_point_px_to_cm(point: tuple[float, float]) -> tuple[float, float]:
+    """
+    Convert a point's coordinates from pixels to centimeters.
+    
+    Args:
+        point (tuple[float, float]): A tuple containing the x and y coordinates in pixels.
+
+    Returns:
+        tuple[float, float]: A tuple containing the x and y coordinates in centimeters.
+    """
     return convert_px_to_cm(point[0]), convert_px_to_cm(point[1])
 
 def convert_pxpf_to_cmps(speed: float, frame_rate: float) -> float:
+    """
+    Convert speed from pixels per frame to centimeters per second.
+    
+    Args:
+        speed (float): Speed in pixels per frame.
+        frame_rate (float): Frame rate of the video.
+
+    Returns:
+        float: Speed in centimeters per second.
+    """
     return convert_px_to_cm(speed) * frame_rate
 
 def invert_yaxis(point: tuple[float, float], height: int) -> tuple[float, float]:
+    """
+    Invert the y-axis of a point's coordinates.
+    
+    Args:
+        point (tuple[float, float]): A tuple containing the x and y coordinates.
+        height (int): Height of the frame or image.
+
+    Returns:
+        tuple[float, float]: A tuple containing the x and y coordinates with the y-axis inverted.
+    """
     return (point[0], height - point[1])
 
 def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
+    """
+    Write findings and extra data to a CSV file.
+    
+    Args:
+        findings (dict): A dictionary containing findings data.
+        extra_data (dict): A dictionary containing extra data.
+        output_path (str): The path to the output CSV file.
+    """
     # if file doesn't exist yet, create it and write headers to it
     if not file_helper.check_existance(output_path):
         with open(output_path, 'w', newline='') as file:
@@ -77,6 +123,15 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
     return
 
 def decompose_path(path: str) -> dict:
+    """
+    Decompose a given file path into its constituent parts and extract metadata.
+
+    Args:
+        path (str): The file path to decompose.
+
+    Returns:
+        dict: A dictionary containing the decomposed path and extracted metadata.
+    """
     norm_path = file_helper.normalize_path(path)
 
     directory, filename, extension = file_helper.split_path(path)
@@ -109,6 +164,12 @@ def decompose_path(path: str) -> dict:
     return result
 
 def extract_findings(results_csv_path: str) -> None:
+    """
+    Extract findings from a CSV file and write the results to a new CSV file.
+
+    Args:
+        results_csv_path (str): The path to the CSV file containing results data.
+    """
     # read and parse available data
     video_path = results_csv_path.replace('_result.csv', '.avi')
     data = storage_helper.read_from_csv(results_csv_path)

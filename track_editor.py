@@ -122,7 +122,7 @@ def await_file_opened():
             toggle_all_widgets(MODEL_FRAME, True)
 
             # Adjust time bounds for the model
-            write_entry(end_frame_entry, str(VIDEO_TOTAL_FRAMES))
+            write_entry(model_end_frame_entry, str(VIDEO_TOTAL_FRAMES))
 
             # Emphasize the 'Model Launch Components' frame
             MODEL_FRAME.config(background='PaleGreen4')
@@ -396,8 +396,8 @@ def run_model(input_path: str, start_frame: int, end_frame: int):
 
 def run_model_wrapper():
     # get start and end frames from entries
-    start_frame = read_entry(start_frame_entry)
-    end_frame   = read_entry(end_frame_entry)
+    start_frame = read_entry(model_start_frame_entry)
+    end_frame   = read_entry(model_end_frame_entry)
 
     # verify start and end times (safeguard for user error)
     if end_frame < start_frame:
@@ -627,17 +627,17 @@ apply_constraints_button.grid(row=4, column=1, padx=5, pady=5, sticky=tk.EW)
 
 
 # Model Launch Components
-start_frame_label = ttk.Label(MODEL_FRAME, text='Start frame:')
-start_frame_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.EW)
-start_frame_entry = tk.Entry(MODEL_FRAME)
-write_entry(start_frame_entry, '0')
-start_frame_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+model_start_frame_label = ttk.Label(MODEL_FRAME, text='Start frame:')
+model_start_frame_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.EW)
+model_start_frame_entry = tk.Entry(MODEL_FRAME)
+write_entry(model_start_frame_entry, '0')
+model_start_frame_entry.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
 
-end_frame_label = ttk.Label(MODEL_FRAME, text='End frame:')
-end_frame_label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.EW)
-end_frame_entry = tk.Entry(MODEL_FRAME)
-write_entry(end_frame_entry, '0')
-end_frame_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
+model_end_frame_label = ttk.Label(MODEL_FRAME, text='End frame:')
+model_end_frame_label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.EW)
+model_end_frame_entry = tk.Entry(MODEL_FRAME)
+write_entry(model_end_frame_entry, '0')
+model_end_frame_entry.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
 
 model_run_button = tk.Button(MODEL_FRAME, text="Run Model", width=18, command=run_model_wrapper)
 model_run_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.EW)

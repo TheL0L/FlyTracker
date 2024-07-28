@@ -108,3 +108,93 @@ def decompose_path(path: str) -> dict:
 
     return result
 
+def extract_findings(results_csv_path: str) -> None:
+    # read and parse available data
+    video_path = results_csv_path.replace('_result.csv', '.avi')
+    data = storage_helper.read_from_csv(results_csv_path)
+    data_from_video_path = decompose_path(video_path)
+
+    # prepare export filepath
+    directory, filename, extension = file_helper.split_path(results_csv_path)
+    export_path = file_helper.join_paths(directory, 'extracted_datapoints.csv')
+
+    # find the video frame rate and dimensions
+    try:
+        capture = cv2.VideoCapture(video_path)
+        if not capture.isOpened:
+            raise Exception()
+        frame_rate = int(capture.get(cv2.CAP_PROP_FPS))
+        width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        capture.release()
+    except:
+        frame_rate = 30
+        width = 70
+        height = 420
+        print(f'Could not read video at {video_path}')
+        print(f'assigning default values {frame_rate=}  {width=}  {height=}')
+
+    # prepare dictionary to store data points on flies
+    # find all qunique IDs whithin the available data
+    findings = {}
+    for frame_number, tracks in data.items():
+        for track in tracks:
+            id, conf, x1, y1, x2, y2 = track
+            _position = ( (x1 + x2)/2, (y1 + y2)/2 )
+            if id not in findings.keys():
+                findings[id] = {
+                    'first_frame': frame_number, 'last_frame': None, 'total_frames': None,
+                    'time': None, 'start_position': _position, 'end_position': None,
+                    'positions': [], 'distance': None, 'min_speed': None,
+                    'max_speed': None, 'avg_speed': None, 'med_speed': None
+                }
+            findings[id]['last_frame'] = frame_number
+            findings[id]['end_position'] = _position
+            findings[id]['positions'].append(_position)
+
+    for id in findings.keys():
+        # invert y-axis for future convenience
+        positions = [invert_yaxis(point, height) for point in findings[id]['positions']]
+        findings[id]['start_position'] = invert_yaxis(findings[id]['start_position'], height)
+        findings[id]['end_position'] = invert_yaxis(findings[id]['end_position'], height)
+
+        # calculate the speeds and travel distance
+        total_distance = 0
+        speeds = []
+        for i in range(1, len(positions)):
+            # calculate the Euclidean distance between consecutive points
+            x1, y1 = positions[i - 1]
+            x2, y2 = positions[i]
+            distance = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+            speeds.append(distance / 2)
+            total_distance += distance
+        
+        findings[id]['min_speed'] = np.min(speeds)
+        findings[id]['max_speed'] = np.max(speeds)
+        findings[id]['avg_speed'] = np.mean(speeds)
+        findings[id]['med_speed'] = np.median(sorted(speeds))
+        findings[id]['distance']  = total_distance
+
+        # calculate total frames and time
+        findings[id]['total_frames'] = findings[id]['last_frame'] - findings[id]['first_frame']
+        findings[id]['time'] = findings[id]['total_frames'] / frame_rate
+
+        ## perform conversions
+        
+        # (x, y)[px, px] -> (x, y)[cm, cm]
+        findings[id]['start_position']  = convert_point_px_to_cm(findings[id]['start_position'])
+        findings[id]['end_position']  = convert_point_px_to_cm(findings[id]['end_position'])
+        findings[id]['positions'] = [convert_point_px_to_cm(pos) for pos in positions]
+
+        # [px/frame] ->  [cm/sec]
+        findings[id]['min_speed'] = convert_pxpf_to_cmps(findings[id]['min_speed'], frame_rate)
+        findings[id]['max_speed'] = convert_pxpf_to_cmps(findings[id]['max_speed'], frame_rate)
+        findings[id]['avg_speed'] = convert_pxpf_to_cmps(findings[id]['avg_speed'], frame_rate)
+        findings[id]['med_speed'] = convert_pxpf_to_cmps(findings[id]['med_speed'], frame_rate)
+
+        # [px] -> [cm]
+        findings[id]['distance']  = convert_px_to_cm(findings[id]['distance'])
+
+    # export findings
+    write_to_csv(findings, data_from_video_path, export_path)
+

@@ -1,7 +1,14 @@
 import file_helper
 import csv
 
-def write_to_csv(data: dict, output_path: str):
+def write_to_csv(data: dict, output_path: str) -> None:
+    """
+    Write data to a CSV file, ensuring it is sorted by frame number.
+
+    Args:
+        data (dict): A dictionary where keys are frame numbers and values are lists of track data.
+        output_path (str): The path to the output CSV file.
+    """
     # make sure data is sorted
     sorted_data = {k: data[k] for k in sorted(data.keys())}
     with open(output_path, 'w', newline='') as file:
@@ -14,10 +21,19 @@ def write_to_csv(data: dict, output_path: str):
                 writer.writerow([frame_num, *track])
 
 def read_from_csv(input_path: str) -> dict:
+    """
+    Read data from a CSV file and return it as a dictionary.
+
+    Args:
+        input_path (str): The path to the input CSV file.
+
+    Returns:
+        dict: A dictionary where keys are frame numbers and values are lists of track data.
+    """
     data = {}
     with open(input_path, 'r', newline='') as file:
         reader = csv.reader(file)
-        next(reader)
+        next(reader)  # Skip header row
         for row in reader:
             if len(row) == 1:
                 data[int(row[0])] = []
@@ -31,10 +47,27 @@ def read_from_csv(input_path: str) -> dict:
     return data
 
 def find_raw_data(video_path: str) -> str:
-    """Find a path to the raw csv of a given video."""
+    """
+    Find the path to the raw CSV file of a given video.
+
+    Args:
+        video_path (str): The path to the video file.
+
+    Returns:
+        str: The path to the raw CSV file if it exists, otherwise None.
+    """
     raw_csv = f'{get_prepared_path(video_path)}_raw.csv'
     return raw_csv if file_helper.check_existance(raw_csv) else None
 
 def get_prepared_path(video_path: str) -> str:
+    """
+    Get the prepared path by splitting the video path into directory and filename.
+
+    Args:
+        video_path (str): The path to the video file.
+
+    Returns:
+        str: The prepared path without the file extension.
+    """
     directory, filename, extension = file_helper.split_path(video_path)
     return file_helper.join_paths(directory, filename)

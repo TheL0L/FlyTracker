@@ -4,7 +4,7 @@ from tkinter import font
 from tkinter import messagebox, simpledialog, filedialog
 import cv2, re
 from PIL import Image, ImageTk
-import storage_helper
+import storage_helper, extract_data
 import data_postprocess
 import video_postprocess
 import threading, time, subprocess
@@ -264,6 +264,11 @@ def export_csv():
     try:
         storage_helper.write_to_csv(TRIMMED_DATA, f'{output_path}_result.csv')
         messagebox.showinfo('Success', f'Exported file to:\n{output_path}_result.csv')
+        try:
+            p = extract_data.extract_findings(f'{output_path}_result.csv')
+            messagebox.showinfo('Success', f'Extracted data points to:\n{p}')
+        except:
+            messagebox.showerror('Error', 'Failed to extracted data points!')
     except:
         messagebox.showerror('Error', 'Failed to export CSV file!')
 

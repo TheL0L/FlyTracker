@@ -196,7 +196,7 @@ def extract_findings(results_csv_path: str) -> None:
         print(f'assigning default values {frame_rate=}  {width=}  {height=}')
 
     # prepare dictionary to store data points on flies
-    # find all qunique IDs whithin the available data
+    # find all unique IDs within the available data
     findings = {}
     for frame_number, tracks in data.items():
         for track in tracks:

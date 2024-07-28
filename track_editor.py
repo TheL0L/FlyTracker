@@ -100,6 +100,11 @@ def await_file_opened():
             # Adjust the timeline bounds 
             timeline_slider.config(to=VIDEO_TOTAL_FRAMES)
 
+            # Adjust time bounds for export
+            write_entry(start_frame_entry, '0')
+            write_entry(end_frame_entry, str(VIDEO_TOTAL_FRAMES))
+            read_time_bounds_from_controls()
+
             # set default margins for the constraints
             write_entry(margins_xmin_entry, '0')
             write_entry(margins_xmax_entry, '0')
@@ -155,6 +160,7 @@ def update_frame():
     read_zoom_from_controls()
     read_speed_from_controls()
     read_constraints_from_controls()
+    read_time_bounds_from_controls()
 
     start_frame = 0 if PATH_LENGTH is None else max(0, frame_number-PATH_LENGTH)
     fly_paths = video_postprocess.construct_paths(TRIMMED_DATA, frame_number, paths=None, start_frame=start_frame)
@@ -207,6 +213,7 @@ def populate_links():
 def apply_constraints():
     global TRIMMED_DATA
     TRIMMED_DATA = data_postprocess.apply_constraints(PROCESSED_DATA, CONSTRAINTS)
+    TRIMMED_DATA = {k: v if TIME_BOUNDS['start'] <= k < TIME_BOUNDS['end'] else [] for k, v in TRIMMED_DATA.items()}
 
 def list_add():
     global LINKS, PROCESSED_DATA, links_listbox
@@ -320,6 +327,8 @@ def reset_variables():
     CONSTRAINTS['x_max'] = None
     CONSTRAINTS['y_min'] = None
     CONSTRAINTS['y_max'] = None
+    TIME_BOUNDS['start'] = None
+    TIME_BOUNDS['end']   = None
     return
 
 def reset_app():
@@ -367,6 +376,30 @@ def read_constraints_from_controls():
         CONSTRAINTS['x_max'], CONSTRAINTS['x_min'] = CONSTRAINTS['x_min'], CONSTRAINTS['x_max']
     if CONSTRAINTS['y_max'] < CONSTRAINTS['y_min']:
         CONSTRAINTS['y_max'], CONSTRAINTS['y_min'] = CONSTRAINTS['y_min'], CONSTRAINTS['y_max']
+
+def read_time_bounds_from_controls():
+    global TIME_BOUNDS
+    global start_frame_entry, end_frame_entry
+
+    # try reading values
+    start = read_entry(start_frame_entry)
+    end   = read_entry(end_frame_entry)
+
+    # replace failed values
+    start = start if start is not None else 0
+    end   = end   if end   is not None else VIDEO_TOTAL_FRAMES
+
+    # clamp bounds to actual video bounds
+    start = data_postprocess.clamp(start, 0, VIDEO_TOTAL_FRAMES)
+    end   = data_postprocess.clamp(end,   0, VIDEO_TOTAL_FRAMES)
+
+    # swap bounds if they are inverted (safeguard for user error)
+    if end < start:
+        start, end = end, start
+    
+    # apply values
+    TIME_BOUNDS['start'] = start
+    TIME_BOUNDS['end'] = end
 
 def run_model(input_path: str, start_frame: int, end_frame: int):
     global __INPUT_VIDEO, __AWAITING_VIDEO
@@ -476,6 +509,10 @@ CONSTRAINTS = {
     'y_max': None,
     'x_min': None,
     'x_max': None
+}
+TIME_BOUNDS = {
+    'start': None,
+    'end':   None
 }
 
 
@@ -618,11 +655,21 @@ margins_xmax_label.grid(row=3, column=0, padx=5, pady=5, sticky=tk.EW)
 margins_xmax_entry = tk.Entry(MARGINS_FRAME)
 margins_xmax_entry.grid(row=3, column=1, padx=5, pady=5, sticky=tk.W)
 
+start_frame_label = ttk.Label(MARGINS_FRAME, text='Start frame:')
+start_frame_label.grid(row=4, column=0, padx=5, pady=5, sticky=tk.EW)
+start_frame_entry = tk.Entry(MARGINS_FRAME)
+start_frame_entry.grid(row=4, column=1, padx=5, pady=5, sticky=tk.W)
+
+end_frame_label = ttk.Label(MARGINS_FRAME, text='End frame:')
+end_frame_label.grid(row=5, column=0, padx=5, pady=5, sticky=tk.EW)
+end_frame_entry = tk.Entry(MARGINS_FRAME)
+end_frame_entry.grid(row=5, column=1, padx=5, pady=5, sticky=tk.W)
+
 margins_view_button = tk.Button(MARGINS_FRAME, text="Show/Hide\nConstraints", width=18, command=toggle_constraints)
-margins_view_button.grid(row=4, column=0, padx=5, pady=5, sticky=tk.EW)
+margins_view_button.grid(row=6, column=0, padx=5, pady=5, sticky=tk.EW)
 
 apply_constraints_button = tk.Button(MARGINS_FRAME, text="Apply\nConstraints", width=18, command=apply_constraints)
-apply_constraints_button.grid(row=4, column=1, padx=5, pady=5, sticky=tk.EW)
+apply_constraints_button.grid(row=6, column=1, padx=5, pady=5, sticky=tk.EW)
 
 
 

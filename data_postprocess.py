@@ -149,3 +149,19 @@ def process_data(data, links):
         # append processed frame to results
         result[frame_number] = fixed_tracks.values()
     return result
+
+
+def filter_by_ids(data: dict, requested_ids: set) -> dict:
+    # filter the data by the requested ids
+    if requested_ids is not None and len(requested_ids) > 0:
+        filtered_data = {}
+        for frame_number, tracks in data.items():
+            filtered_data[frame_number] = []
+            for track in tracks:
+                id, conf, x1, y1, x2, y2 = track
+                if id not in requested_ids:
+                    continue
+                filtered_data[frame_number].append(track)
+        data = filtered_data
+    return data
+

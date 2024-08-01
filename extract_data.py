@@ -1,4 +1,5 @@
 import file_helper, storage_helper
+from data_postprocess import filter_by_ids
 import csv
 import re
 import numpy as np
@@ -165,7 +166,7 @@ def decompose_path(path: str) -> dict:
 
     return result
 
-def extract_findings(results_csv_path: str) -> str:
+def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
     """
     Extract findings from a CSV file and write the results to a new CSV file.
 
@@ -181,6 +182,8 @@ def extract_findings(results_csv_path: str) -> str:
     directory, filename, extension = file_helper.split_path(results_csv_path)
     export_path = file_helper.join_paths(directory, 'extracted_datapoints.csv')
 
+    data = filter_by_ids(data, requested_ids)
+    
     # find the video frame rate and dimensions
     try:
         capture = cv2.VideoCapture(video_path)

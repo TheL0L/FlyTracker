@@ -258,6 +258,28 @@ def list_del():
     del LINKS[int(swapped)]
     process_data()
 
+def list_export_add():
+    global export_listbox
+    ans = simpledialog.askstring("Input", "Enter ID for export:")
+    if ans is None:
+        return
+    export_listbox.insert(tk.END, re.findall(r'\d+', ans)[0])
+
+def list_export_del():
+    global export_listbox
+    selected_index = export_listbox.curselection()
+    if not selected_index:
+        return
+    export_listbox.delete(selected_index)
+
+def get_export_ids():
+    collapsed_links = data_postprocess.propagate_links(LINKS)
+    requested_ids = set(int(id) for id in export_listbox.get(0, tk.END))
+    for id in requested_ids:
+        if id not in collapsed_links:
+            collapsed_links[id] = id
+    return set(collapsed_links[id] for id in requested_ids)
+
 def export_csv():
     # prepare output basename
     output_path = storage_helper.get_prepared_path(__INPUT_VIDEO)
@@ -265,7 +287,7 @@ def export_csv():
         storage_helper.write_to_csv(TRIMMED_DATA, f'{output_path}_result.csv')
         messagebox.showinfo('Success', f'Exported file to:\n{output_path}_result.csv')
         try:
-            p = extract_data.extract_findings(f'{output_path}_result.csv')
+            p = extract_data.extract_findings(f'{output_path}_result.csv', get_export_ids())
             messagebox.showinfo('Success', f'Extracted data points to:\n{p}')
         except:
             messagebox.showerror('Error', 'Failed to extracted data points!')
@@ -276,7 +298,8 @@ def export_mp4():
     # prepare output basename
     output_path = storage_helper.get_prepared_path(__INPUT_VIDEO)
     try:
-        video_postprocess.annotate_video(TRIMMED_DATA, __INPUT_VIDEO, f'{output_path}_result.mp4', None, False)
+        requested_data = data_postprocess.filter_by_ids(TRIMMED_DATA, get_export_ids())
+        video_postprocess.annotate_video(requested_data, __INPUT_VIDEO, f'{output_path}_result.mp4', None, False)
         messagebox.showinfo('Success', f'Exported file to:\n{output_path}_result.mp4')
     except:
         messagebox.showerror('Error', 'Failed to export MP4 file!')
@@ -582,6 +605,12 @@ MODEL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=__FRAME_MARGIN, 
 LINKS_CONTROL_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=DATA_CONTROL_FRAME.cget('bg'))
 LINKS_CONTROL_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN, expand=False)
 
+SPACING_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=__FRAME_GAP)
+SPACING_FRAME.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+
+EXPORT_IDS_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=DATA_CONTROL_FRAME.cget('bg'))
+EXPORT_IDS_FRAME.pack(side=tk.LEFT, fill=tk.BOTH, padx=__FRAME_MARGIN, pady=__FRAME_MARGIN, expand=False)
+
 # SPACING_FRAME = tk.Frame(DATA_CONTROL_FRAME, bg=__BACKGROUND_DARK, width=__FRAME_GAP)  # TODO
 # SPACING_FRAME.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
@@ -720,6 +749,21 @@ gap_entry.grid(row=2, column=2, columnspan=2, padx=(5, 0), pady=5, sticky=tk.E)
 
 auto_button = tk.Button(LINKS_CONTROL_FRAME, text="Automatically find links", command=auto_process)
 auto_button.grid(row=3, column=0, columnspan=4, pady=5, sticky=tk.EW)
+
+
+
+# Link Control Components
+export_list_label = tk.Label(EXPORT_IDS_FRAME, text='Export IDs:')
+export_list_label.grid(row=0, column=0, columnspan=2, pady=9, sticky=tk.W)
+
+export_list_add_button = tk.Button(EXPORT_IDS_FRAME, text="Add", width=8, command=list_export_add)
+export_list_add_button.grid(row=2, column=0, pady=5, sticky=tk.W)
+
+export_list_del_button = tk.Button(EXPORT_IDS_FRAME, text="Remove", width=8, command=list_export_del)
+export_list_del_button.grid(row=2, column=1, pady=5, sticky=tk.E)
+
+export_listbox = tk.Listbox(EXPORT_IDS_FRAME)
+export_listbox.grid(row=1, column=0, columnspan=2, pady=5, sticky=tk.EW)
 
 
 

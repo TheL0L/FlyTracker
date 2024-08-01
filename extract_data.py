@@ -168,10 +168,18 @@ def decompose_path(path: str) -> dict:
 
 def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
     """
-    Extract findings from a CSV file and write the results to a new CSV file.
+    Extract findings from a CSV file containing tracking data and write the results to a new CSV file.
+    
+    This function reads tracking data from a specified CSV file, processes the data to extract
+    relevant findings, and writes the processed data to a new CSV file named 'extracted_datapoints.csv'
+    in the same directory as the input file.
 
     Args:
-        results_csv_path (str): The path to the CSV file containing results data.
+        results_csv_path (str): The path to the CSV file containing the tracking results data.
+        requested_ids (set, optional): A set of IDs to filter the data by. If None, all IDs will be processed.
+
+    Returns:
+        str: The path to the newly created CSV file containing the extracted findings.
     """
     # read and parse available data
     video_path = results_csv_path.replace('_result.csv', '.avi')

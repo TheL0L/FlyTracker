@@ -110,10 +110,24 @@ def apply_constraints(data, constraints):
     return result
 
 
+def propagate_links(links):
+    # links = {swapped: original}
+    collapsed = {}
+    for swapped in links:
+        current = swapped
+        while current in links:
+            current = links[current]
+        collapsed[swapped] = current
+    return collapsed
+
+
 def process_data(data, links):
     # track = tuple( id, conf, x1, y1, x2, y2 )
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
-    
+
+    # collapse chains in the links
+    links = propagate_links(links)
+
     # prepare variable for storing the processed data
     result = {}
 

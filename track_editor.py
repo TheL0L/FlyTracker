@@ -273,6 +273,10 @@ def list_export_del():
         return
     export_listbox.delete(selected_index)
 
+def list_export_reset():
+    global export_listbox
+    export_listbox.delete(0, tk.END)
+
 def get_export_ids():
     collapsed_links = data_postprocess.propagate_links(LINKS)
     requested_ids = set(int(id) for id in export_listbox.get(0, tk.END))
@@ -363,6 +367,7 @@ def reset_variables():
 def reset_app():
     global __AWAITING_VIDEO
     reset_variables()
+    list_export_reset()
 
     if not __AWAITING_VIDEO:
         __AWAITING_VIDEO = True

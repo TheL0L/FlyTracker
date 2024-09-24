@@ -147,7 +147,7 @@ def decompose_path(path: str) -> dict:
         'Technical Repetition': None,
         'Vial Number':          None,
     }
-    regex = re.compile(r'.*NGT-SCE/NGT_mating_\d+\.\d+\.\d+/(\d+)d(\d{8})_(\d{8})_NGT/.+/(\d+)_\d{8}_1\.(\d+)_start_v([1-5])\.avi$')
+    regex = re.compile(r'.*NGT-SCE/NGT_mating_\d+\.\d+\.\d+/(\d+)d(\d{8})_(\d{8})_NGT/.+/(\d+)_\d{8}_\d\.(\d+)_start_v([1-5])\.avi$')
 
     m = regex.match(norm_path)
     if m is None:

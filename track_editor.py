@@ -260,10 +260,11 @@ def list_del():
 
 def list_export_add():
     global export_listbox
-    ans = simpledialog.askstring("Input", "Enter ID for export:")
+    ans = simpledialog.askstring("Input", "Enter IDs for export:")
     if ans is None:
         return
-    export_listbox.insert(tk.END, re.findall(r'\d+', ans)[0])
+    for id in re.findall(r'\d+', ans):
+        export_listbox.insert(tk.END, id)
 
 def list_export_del():
     global export_listbox

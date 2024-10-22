@@ -115,7 +115,7 @@ def propagate_links(links):
     collapsed = {}
     for swapped in links:
         current = swapped
-        while current in links:
+        while current in links and current != links[current]:
             current = links[current]
         collapsed[swapped] = current
     return collapsed

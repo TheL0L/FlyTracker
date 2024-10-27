@@ -73,6 +73,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
         with open(output_path, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([
+                'Sub Folder',
                 'Video Name',
                 'Age',
                 'Mating Date',
@@ -100,6 +101,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
         writer = csv.writer(file)
         for ID in findings.keys():
             writer.writerow([
+                extra_data['Sub Folder'],
                 extra_data['Video Name'],
                 extra_data['Age'],
                 extra_data['Mating Date'],
@@ -139,6 +141,7 @@ def decompose_path(path: str) -> dict:
     directory, filename, extension = file_helper.split_path(path)
 
     result = {
+        'Sub Folder':           None,
         'Video Name':           filename + extension,
         'Age':                  None,
         'Mating Date':          None,

@@ -366,11 +366,20 @@ class MainWindow(QtWidgets.QWidget):
             self, "Select a Video File", "", "Video files (*.avi);;All files (*.*)"
         )
         if file_path != '':
+            if not self.__AWAITING_VIDEO:
+                self.update_timer.stop()
+            
+            old_path = self.__INPUT_VIDEO
             self.__INPUT_VIDEO = file_path
             try:
                 self.await_file_opened()
+                self.reset_app()
             except Exception as err:
                 QMessageBox.warning(self, 'Error', f'An exception occurred in await_file_opened():\n{err}')
+                self.__INPUT_VIDEO = old_path
+
+                if not self.__AWAITING_VIDEO:
+                    self.update_timer.start()
 
     def await_file_opened(self):
         if self.__INPUT_VIDEO is not None:
@@ -378,11 +387,13 @@ class MainWindow(QtWidgets.QWidget):
             raw_file = storage_helper.find_raw_data(self.__INPUT_VIDEO)
             self.STORED_RAW_DATA = storage_helper.read_from_csv(raw_file) if raw_file is not None else None
 
-            if self.VIDEO_CAPTURE is None:
-                # Initialize the video capture
-                self.VIDEO_CAPTURE = cv2.VideoCapture(self.__INPUT_VIDEO)
-                self.VIDEO_TOTAL_FRAMES = int(self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FRAME_COUNT))
-                self.PLAYBACK_DELAY_MS = int(1000 / self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
+            if self.VIDEO_CAPTURE is not None:
+                self.VIDEO_CAPTURE.release()
+            
+            # Initialize the video capture
+            self.VIDEO_CAPTURE = cv2.VideoCapture(self.__INPUT_VIDEO)
+            self.VIDEO_TOTAL_FRAMES = int(self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.PLAYBACK_DELAY_MS = int(1000 / self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
 
             if self.STORED_RAW_DATA is not None:
                 self.init_for_video()
@@ -428,7 +439,10 @@ class MainWindow(QtWidgets.QWidget):
         self.update_timer.start(self.PLAYBACK_DELAY_MS)
 
     def init_for_model(self):
-        # Enable Model Launch Components
+        self.__AWAITING_VIDEO = True
+
+        # Enable Model Launch Components, Disable the rest
+        self.toggle_all_panels(False)
         self.toggle_panel(self.model_frame, True)
 
         # Set default trail length
@@ -554,6 +568,11 @@ class MainWindow(QtWidgets.QWidget):
         self.PLAYBACK_DELAY_MS = 100 if self.VIDEO_CAPTURE is None else int(1000 / self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
         self.TRAIL_LENGTH = None
 
+        self.VIDEO_TOTAL_FRAMES = 0 if self.VIDEO_CAPTURE is None else int(self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        if self.VIDEO_CAPTURE is not None:
+            self.VIDEO_CAPTURE.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
         self.DRAW_CONSTRAINTS = True
         self.TIME_BOUNDS = {'start': None, 'end': None}
     
@@ -561,6 +580,11 @@ class MainWindow(QtWidgets.QWidget):
         self.zoom_slider.setValue(int(self.ZOOM_SCALAR * 100))
         self.speed_slider.setValue(100)
         self.set_textbox_value(self.trail_length_textbox, '-1')
+
+        self.timeline_slider.setValue(0)
+        self.timeline_slider.setMaximum(self.VIDEO_TOTAL_FRAMES)
+
+        self.preview_panel.clear()
 
         self.set_textbox_value(self.model_start_frame_textbox, '0')
         self.set_textbox_value(self.model_end_frame_textbox, str(self.VIDEO_TOTAL_FRAMES))
@@ -581,7 +605,8 @@ class MainWindow(QtWidgets.QWidget):
         self.reset_gui_components()
 
         # Remove emphasis from 'Model Launch Components' frame
-        self.model_frame.setStyleSheet(f'')
+        if not self.__AWAITING_VIDEO:
+            self.model_frame.setStyleSheet(f'')
 
         if not self.__AWAITING_VIDEO:
             # Process the loaded data automatically

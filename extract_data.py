@@ -159,7 +159,7 @@ def decompose_path(path: str) -> dict:
     technical_repetition = r'\d+'
     vial_number = r'[1-5]'
 
-    regex_pattern = rf'{root}{root_mating_date}/({age})d({mating_date})_({testing_date})_NGT/{any_folder}/' \
+    regex_pattern = rf'{root}{root_mating_date}/({age})d({mating_date})_({testing_date})_NGT/({any_folder})/' \
                     rf'({group})_{testing_date}_{constant_number}\.({technical_repetition})_start_v({vial_number})\.avi$'
     
     regex = re.compile(regex_pattern)
@@ -175,9 +175,10 @@ def decompose_path(path: str) -> dict:
     result['Age']                  = int(g[0])
     result['Mating Date']          = date_format(g[1])
     result['Testing Date']         = date_format(g[2])
-    result['Group']                = int(g[3])
-    result['Technical Repetition'] = int(g[4])
-    result['Vial Number']          = int(g[5])
+    result['Sub Folder']           = g[3]
+    result['Group']                = int(g[4])
+    result['Technical Repetition'] = int(g[5])
+    result['Vial Number']          = int(g[6])
 
     return result
 

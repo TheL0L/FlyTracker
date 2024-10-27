@@ -89,6 +89,10 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 'Start Position (x, y)[cm, cm]',
                 'End Position (x, y)[cm, cm]',
                 'Distance [cm]',
+                'Upwards Distance [cm]',
+                'Max Height [cm]',
+                'Max Height Frames',
+                'Max Height Time [sec]',
                 'Min Speed [cm/sec]',
                 'Max Speed [cm/sec]',
                 'Avg Speed [cm/sec]',
@@ -117,6 +121,10 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 findings[ID]['start_position'],
                 findings[ID]['end_position'],
                 findings[ID]['distance'],
+                findings[ID]['upwards_distance'],
+                findings[ID]['max_height'],
+                findings[ID]['max_height_frames'],
+                findings[ID]['max_height_time'],
                 findings[ID]['min_speed'],
                 findings[ID]['max_speed'],
                 findings[ID]['avg_speed'],
@@ -239,7 +247,8 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
                     'first_frame': frame_number, 'last_frame': None, 'total_frames': None,
                     'time': None, 'start_position': _position, 'end_position': None,
                     'positions': [], 'distance': None, 'min_speed': None,
-                    'max_speed': None, 'avg_speed': None, 'med_speed': None
+                    'max_speed': None, 'avg_speed': None, 'med_speed': None,
+                    'upwards_distance': None, 'max_height': None, 'max_height_frames': None, 'max_height_time': None
                 }
             findings[id]['last_frame'] = frame_number
             findings[id]['end_position'] = _position
@@ -251,7 +260,10 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         findings[id]['start_position'] = invert_yaxis(findings[id]['start_position'], height)
         findings[id]['end_position'] = invert_yaxis(findings[id]['end_position'], height)
 
-        # calculate the speeds and travel distance
+        # calculate the speeds, travel distance and max height
+        upwards_distance = 0
+        max_height = 0
+        max_height_frames = 0
         total_distance = 0
         speeds = []
         for i in range(1, len(positions)):
@@ -261,16 +273,31 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
             distance = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
             speeds.append(distance / 2)
             total_distance += distance
-        
+
+            # update max height
+            if y2 > max_height:
+                max_height = y2
+                max_height_frames = i
+
+            # update upwards movement
+            if y2 > y1:
+                upwards_distance += y2 - y1
+
         findings[id]['min_speed'] = np.min(speeds)
         findings[id]['max_speed'] = np.max(speeds)
         findings[id]['avg_speed'] = np.mean(speeds)
         findings[id]['med_speed'] = np.median(sorted(speeds))
         findings[id]['distance']  = total_distance
+        findings[id]['max_height'] = max_height
+        findings[id]['upwards_distance'] = upwards_distance
 
         # calculate total frames and time
         findings[id]['total_frames'] = findings[id]['last_frame'] - findings[id]['first_frame']
         findings[id]['time'] = findings[id]['total_frames'] / frame_rate
+
+        # calculate time taken to reach max height
+        findings[id]['max_height_frames'] = findings[id]['first_frame'] + max_height_frames
+        findings[id]['max_height_time'] = findings[id]['max_height_frames'] / frame_rate
 
         ## perform conversions
         
@@ -287,6 +314,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
 
         # [px] -> [cm]
         findings[id]['distance']  = convert_px_to_cm(findings[id]['distance'])
+        findings[id]['upwards_distance']  = convert_px_to_cm(findings[id]['upwards_distance'])
 
     # delete old export if exists
     try:

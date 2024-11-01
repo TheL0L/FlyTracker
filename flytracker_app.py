@@ -42,7 +42,7 @@ def analyze_video(fly_tracker: FlyTracker, video_path: str, start_frame, end_fra
     stream.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
     success, frame = stream.read()
 
-    # prepare variable for storing data
+    # prepare variables for storing data
     frames_count = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
     skipped_frames = list(range(start_frame)) + list(range(end_frame, frames_count))
     data = { k:[] for k in skipped_frames }
@@ -60,10 +60,7 @@ def analyze_video(fly_tracker: FlyTracker, video_path: str, start_frame, end_fra
         frame = frame_preprocess_method(frame)
         tracks = fly_tracker.detect(frame)
 
-        data[frame_number] = []
-
-        for track in tracks:
-            data[frame_number].append(track)
+        data[frame_number] = tracks
 
         success, frame = stream.read()
     

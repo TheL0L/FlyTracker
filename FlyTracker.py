@@ -16,7 +16,6 @@ class FlyTracker:
         detector: YOLO object detector.
         tracker: DeepSort tracker.
         confidence_threshold (float): Confidence threshold for YOLO detections.
-        constraints (dict): Constraints for filtering tracked objects based on their coordinates.
     """
 
     def __init__(self, model_path, track_max_age=10, confidence_threshold=0) -> None:
@@ -28,12 +27,9 @@ class FlyTracker:
             track_max_age (int, optional): Maximum age of a track before it is considered invalid. Defaults to 10.
             confidence_threshold (float, optional): Confidence threshold for YOLO detections. Defaults to 0.
         """
-        self.detector = YOLO(model_path)
-        self.tracker = DeepSort(max_age=track_max_age)
-
         self.__device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.detector.to(self.__device)
-
+        self.detector = YOLO(model_path).to(self.__device)
+        self.tracker = DeepSort(max_age=track_max_age, embedder_gpu=(self.__device.type == 'cuda'), half=False)
         self.confidence_threshold = max(min(confidence_threshold, 1), 0)
 
     @staticmethod
@@ -94,7 +90,7 @@ class FlyTracker:
         # reformat the tracking results
         tracks = [self.__sort2result(t) for t in tracks]
 
-        return list(tracks)
+        return tracks
 
     def reset_tracking(self) -> None:
         """

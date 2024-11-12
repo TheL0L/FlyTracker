@@ -292,7 +292,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         findings[id]['upwards_distance'] = upwards_distance
 
         # calculate total frames and time
-        findings[id]['total_frames'] = findings[id]['last_frame'] - findings[id]['first_frame']
+        findings[id]['total_frames'] = findings[id]['last_frame'] - findings[id]['first_frame'] + 1
         findings[id]['time'] = findings[id]['total_frames'] / frame_rate
 
         # calculate time taken to reach max height

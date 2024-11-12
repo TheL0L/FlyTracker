@@ -200,6 +200,34 @@ def find_gaps_in_data(data):
     return gaps
 
 
+def fill_gaps_in_data(data, data_gaps):
+    # track = tuple( id, conf, x1, y1, x2, y2 )
+    # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
+
+    def get_point(tracks, id):
+        for track in tracks:
+            tid, conf, x1, y1, x2, y2 = track
+            if tid == id:
+                return int((x1 + x2) / 2), int((y1 + y2) / 2)
+
+    # iterate over the gaps of each id
+    for id, gaps in data_gaps:
+        for gap in gaps:
+            # generate points on a straight line
+            start_point = get_point(data[gap[0]-1], id)
+            end_point   = get_point(data[gap[-1]+1], id)
+            estimated = generate_points_between(start_point, end_point, len(gap))
+            # insert the estimated points as track elements
+            for frame in gap:
+                x, y = estimated[frame - gap[0]]
+                tracks = list(data[frame])
+                tracks.append((id, None, x, y, x, y))
+                data[frame] = sorted(tracks, key=lambda x: x[0])
+    
+    # return data without gaps
+    return data
+
+
 def generate_points_between(start, end, count):
     # generate <count> (equally spaced) points on a straight line <start, end>
     x_values = np.linspace(start[0], end[0], count+2)

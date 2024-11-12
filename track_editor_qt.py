@@ -433,11 +433,6 @@ class MainWindow(QtWidgets.QWidget):
         # Allow preview playback to start
         self.IS_PLAYING = True
 
-        # Process the loaded data automatically
-        self.auto_process()
-        # Start the frame update loop
-        self.update_timer.start(self.PLAYBACK_DELAY_MS)
-
     def init_for_model(self):
         self.__AWAITING_VIDEO = True
 

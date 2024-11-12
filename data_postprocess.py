@@ -167,6 +167,39 @@ def filter_by_ids(data: dict, requested_ids: set) -> dict:
     return data
 
 
+def find_gaps_in_data(data):
+    # track = tuple( id, conf, x1, y1, x2, y2 )
+    # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
+
+    appearances = {}
+    # iterate over the data, and find for each id in which frames it appears
+    for frame_number in range(0, len(data)):
+        for id in [d[0] for d in data[frame_number]]:
+            if id not in appearances.keys():
+                appearances[id] = []
+            appearances[id].append(frame_number)
+
+    missing = {}
+    # iterate over the data, and find for each id in which frames it does not appear
+    for id, frames in appearances.items():
+        missing_frames = [f for f in range(frames[0], frames[-1]+1) if f not in frames]
+        if len(missing_frames) > 0:
+            missing[id] = missing_frames
+    
+    gaps = []
+    # iterate over the missing frames per id, and group them into gaps
+    for id, frames in missing.items():
+        groups = [[frames[0]]]
+        for i in range(1, len(frames)):
+            if frames[i] == frames[i - 1] + 1:
+                groups[-1].append(frames[i])
+            else:
+                groups.append([frames[i]])
+        gaps.append((id, groups))
+    
+    return gaps
+
+
 def generate_points_between(start, end, count):
     # generate <count> (equally spaced) points on a straight line <start, end>
     x_values = np.linspace(start[0], end[0], count+2)

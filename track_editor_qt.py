@@ -844,6 +844,39 @@ class MainWindow(QtWidgets.QWidget):
 
         self.await_file_opened()
 
+    def get_frames(self, start_frame: int, frames_count: int) -> list[QPixmap]:
+        frames = []
+        paused_at = self.VIDEO_CAPTURE.get(cv2.CAP_PROP_POS_FRAMES)
+        self.VIDEO_CAPTURE.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        try:
+            for _ in range(start_frame, start_frame + frames_count + 1):
+                ret, frame = self.VIDEO_CAPTURE.read()
+
+                # Convert the frame to a format that can be used by Qt
+                rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                height, width, _ = rgb_image.shape
+                bytes_per_line = 3 * width
+                q_image = QImage(rgb_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
+
+                # Scale the frame
+                pixmap = QPixmap.fromImage(q_image)
+                scaled_pixmap = pixmap.scaled(
+                    int(pixmap.width() * self.ZOOM_SCALAR),
+                    int(pixmap.height() * self.ZOOM_SCALAR),
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+
+                # Append the requested frame
+                frames.append(scaled_pixmap)
+        except Exception as error:
+            QMessageBox.warning(self, 'Error', 'The video capture object failed to retrive the requested frames.')
+            frames = []
+        finally:
+            # Revert timeline progress on the video capture object
+            self.VIDEO_CAPTURE.set(cv2.CAP_PROP_POS_FRAMES, paused_at)
+            return frames
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 

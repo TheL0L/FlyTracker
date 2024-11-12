@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def clamp(value, _min, _max):
     return max(_min, min(value, _max))
@@ -165,3 +166,10 @@ def filter_by_ids(data: dict, requested_ids: set) -> dict:
         data = filtered_data
     return data
 
+
+def generate_points_between(start, end, count):
+    # generate <count> (equally spaced) points on a straight line <start, end>
+    x_values = np.linspace(start[0], end[0], count+2)
+    y_values = np.linspace(start[1], end[1], count+2)
+    points = [(int(x), int(y)) for x, y in zip(x_values, y_values)]
+    return points[1:-1]

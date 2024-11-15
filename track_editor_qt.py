@@ -9,7 +9,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QSlider, QVBoxLayout, QHBoxLayout,
     QPushButton, QLineEdit, QListWidget, QFileDialog, QMessageBox,
-    QSpacerItem, QSizePolicy
+    QSpacerItem, QSizePolicy, QTabWidget
 )
 from PyQt5.QtCore import QTime, QTimer, QMutex, Qt, pyqtSignal
 from PyQt5.QtGui import QPixmap, QFont, QImage
@@ -209,7 +209,15 @@ class MainWindow(QtWidgets.QWidget):
 
         ft_control_layout.addWidget(self.model_frame)
 
-        left_layout.addWidget(self.ft_control_frame)
+        # Tab for Margins Model
+        self.ft_control_tab_widget = QTabWidget()
+        self.ft_control_tab_widget.addTab(self.ft_control_frame, "Margins and Inference")
+
+        # Tab for Manual Editing
+        self.second_tab_frame = QtWidgets.QFrame()
+        self.ft_control_tab_widget.addTab(self.second_tab_frame, "Manual Adjustment")
+
+        left_layout.addWidget(self.ft_control_tab_widget)
         left_layout.addSpacing(self.__FRAME_GAP)
 
         # Data Control Frame (Links Control Frame and Export IDs Frame)
@@ -921,6 +929,38 @@ if __name__ == "__main__":
         QCheckBox::indicator:unchecked {
             background-color: transparent;
             border: 1px solid #999999;
+        }
+
+        /* QTabWidget styling */
+        QTabWidget::pane { 
+            border: 1px solid #999999; 
+            background-color: #333333; 
+        }
+
+        QTabBar::tab {
+            background: #555555;
+            color: white;
+            border: 1px solid #999999;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+        }
+
+        QTabBar::tab:selected {
+            background: #669966;
+            color: white;
+        }
+
+        QTabBar::tab:hover {
+            background: #60AA60;
+        }
+
+        QTabBar::tab:!selected {
+            background: #555555;
+        }
+
+        QTabBar::tab:!selected:hover {
+            background: #777777;
         }
     """)
 

@@ -866,17 +866,8 @@ class MainWindow(QtWidgets.QWidget):
                 bytes_per_line = 3 * width
                 q_image = QImage(rgb_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
 
-                # Scale the frame
-                pixmap = QPixmap.fromImage(q_image)
-                scaled_pixmap = pixmap.scaled(
-                    int(pixmap.width() * self.ZOOM_SCALAR),
-                    int(pixmap.height() * self.ZOOM_SCALAR),
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation
-                )
-
                 # Append the requested frame
-                frames.append(scaled_pixmap)
+                frames.append(QPixmap.fromImage(q_image))
         except Exception as error:
             QMessageBox.warning(self, 'Error', 'The video capture object failed to retrive the requested frames.')
             frames = []

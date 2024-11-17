@@ -49,6 +49,7 @@ class MainWindow(QtWidgets.QWidget):
         self.PROCESSED_DATA = None
         self.STORED_RAW_DATA = None
         self.TRIMMED_DATA = None
+        self.DATA_GAPS = None
 
         # Video variables
         self.VIDEO_CAPTURE = None
@@ -566,6 +567,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def reset_variables(self):
         self.LINKS = {}
+        self.DATA_GAPS = []
         
         self.ZOOM_SCALAR = 2.2
         self.PLAYBACK_DELAY_MS = 100 if self.VIDEO_CAPTURE is None else int(1000 / self.VIDEO_CAPTURE.get(cv2.CAP_PROP_FPS))
@@ -689,6 +691,9 @@ class MainWindow(QtWidgets.QWidget):
         self.populate_links()
         self.PROCESSED_DATA = data_postprocess.process_data(self.STORED_RAW_DATA, self.LINKS)
         self.apply_constraints()
+        self.DATA_GAPS = data_postprocess.find_gaps_in_data(self.TRIMMED_DATA)
+        self.TRIMMED_DATA = data_postprocess.fill_gaps_in_data(self.TRIMMED_DATA, self.DATA_GAPS)
+        self.populate_gaps_list()
 
     def populate_links(self):
         self.list_links_reset()

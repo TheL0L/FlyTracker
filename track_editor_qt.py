@@ -210,15 +210,22 @@ class MainWindow(QtWidgets.QWidget):
 
         ft_control_layout.addWidget(self.model_frame)
 
-        # Tab for Margins Model
-        self.ft_control_tab_widget = QTabWidget()
-        self.ft_control_tab_widget.addTab(self.ft_control_frame, "Margins and Inference")
+        # Manual Adjustment Frame
+        self.manual_frame = QtWidgets.QFrame()
+        manual_frame_layout = QtWidgets.QGridLayout(self.manual_frame)
 
-        # Tab for Manual Editing
-        self.second_tab_frame = QtWidgets.QFrame()
-        self.ft_control_tab_widget.addTab(self.second_tab_frame, "Manual Adjustment")
+        gaps_list_label = QLabel('Automatically filled gaps:')
+        manual_frame_layout.addWidget(gaps_list_label, 0, 0)
 
-        left_layout.addWidget(self.ft_control_tab_widget)
+        self.gaps_listbox = QListWidget()
+        manual_frame_layout.addWidget(self.gaps_listbox, 1, 0)
+
+        # Tabs widget
+        self.tab_widget = QTabWidget()
+        self.tab_widget.addTab(self.ft_control_frame, "Margins and Inference")
+        self.tab_widget.addTab(self.manual_frame, "Manual Adjustment")
+
+        left_layout.addWidget(self.tab_widget)
         left_layout.addSpacing(self.__FRAME_GAP)
 
         # Data Control Frame (Links Control Frame and Export IDs Frame)

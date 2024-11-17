@@ -7,10 +7,6 @@ class AdjustmentDialog(QDialog):
     def __init__(self, frames: list[QPixmap], points: list[tuple[int, int]]):
         super().__init__()
 
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setWindowTitle("Manual Path Adjustment")
-        self.setFixedSize(frames[0].width(), frames[0].height())
-
         self.frames = frames
         self.points = points
 
@@ -18,6 +14,11 @@ class AdjustmentDialog(QDialog):
         self.dragging = False
         self.drag_margin = 15
         self.hide_gui = False
+        self.scale = 2
+
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowTitle("Manual Path Adjustment")
+        self.setFixedSize(frames[0].width() * self.scale, frames[0].height() * self.scale)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Left:
@@ -29,11 +30,19 @@ class AdjustmentDialog(QDialog):
         elif event.key() == Qt.Key_Space:
             self.hide_gui = not self.hide_gui
             self.update()
+        elif event.key() == Qt.Key_Plus:
+            self.scale = min(self.scale+1, 5)
+            self.setFixedSize(self.frames[0].width() * self.scale, self.frames[0].height() * self.scale)
+            self.update()
+        elif event.key() == Qt.Key_Minus:
+            self.scale = max(1, self.scale-1)
+            self.setFixedSize(self.frames[0].width() * self.scale, self.frames[0].height() * self.scale)
+            self.update()
         else:
             super().keyPressEvent(event)
 
     def mousePressEvent(self, event):
-        current_point = QPoint(self.points[self.current_frame][0], self.points[self.current_frame][1])
+        current_point = self.getScaledPoint(self.points[self.current_frame])
         drag_rect = QRect(
             current_point.x() - self.drag_margin, current_point.y() - self.drag_margin,
             self.drag_margin*2, self.drag_margin*2
@@ -45,15 +54,32 @@ class AdjustmentDialog(QDialog):
         if self.dragging:
             if self.current_frame in [0, len(self.frames)-1]:
                 return  # ignore static point frames
-            self.points[self.current_frame] = (event.pos().x(), event.pos().y())
+            self.points[self.current_frame] = (
+                int(event.pos().x() / self.scale),
+                int(event.pos().y() / self.scale)
+            )
             self.update()
 
     def mouseReleaseEvent(self, event):
         self.dragging = False
 
+    def getScaledFrame(self, frame_number) -> QPixmap:
+        pixmap = self.frames[frame_number]
+        scaled_pixmap = pixmap.scaled(
+            int(pixmap.width() * self.scale),
+            int(pixmap.height() * self.scale),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+        return scaled_pixmap
+
+    def getScaledPoint(self, point: tuple[int, int]) -> QPoint:
+        scaled_point = QPoint(point[0] * self.scale, point[1] * self.scale)
+        return scaled_point
+
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.drawPixmap(self.rect(), self.frames[self.current_frame])
+        painter.drawPixmap(self.rect(), self.getScaledFrame(self.current_frame))
         
         if not self.hide_gui:
             self.draw_path(painter)
@@ -61,16 +87,16 @@ class AdjustmentDialog(QDialog):
 
     def draw_path(self, painter: QPainter) -> None:
         painter.setPen(QPen(QColor(255, 0, 0), 2))
-        last = QPoint(self.points[0][0], self.points[0][1])
+        last = self.getScaledPoint(self.points[0])
         for x in range(1, len(self.points)):
-            current = QPoint(self.points[x][0], self.points[x][1])
+            current = self.getScaledPoint(self.points[x])
             painter.drawLine(last, current)
             last = current
 
     def draw_points(self, painter: QPainter) -> None:
         painter.setPen(QPen())
         for x in range(len(self.points)):
-            point = QPoint(self.points[x][0], self.points[x][1])
+            point = self.getScaledPoint(self.points[x])
             if x in [0, len(self.points)-1]:
                 painter.setBrush(QColor(0, 255, 0, 20))
                 painter.drawEllipse(point, 5, 5)

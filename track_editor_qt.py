@@ -367,6 +367,7 @@ class MainWindow(QtWidgets.QWidget):
         self.toggle_panel(self.preview_control_frame, state)
         self.toggle_panel(self.margins_frame, state)
         self.toggle_panel(self.model_frame, state)
+        self.toggle_panel(self.manual_frame, state)
         self.toggle_panel(self.data_control_frame, state)
         self.toggle_panel(self.export_buttons_frame, state)
 
@@ -609,6 +610,7 @@ class MainWindow(QtWidgets.QWidget):
         self.set_textbox_value(self.gap_textbox, '3')
         
         self.list_links_reset()
+        self.list_gaps_reset()
         self.list_export_reset()
 
     def reset_app(self):
@@ -866,8 +868,11 @@ class MainWindow(QtWidgets.QWidget):
 
         self.await_file_opened()
 
-    def populate_gaps_list(self):
+    def list_gaps_reset(self):
         self.gaps_listbox.clear()
+
+    def populate_gaps_list(self):
+        self.list_gaps_reset()
         for id, gaps in self.DATA_GAPS:
             for gap in gaps:
                 self.gaps_listbox.addItem(f'{id:<5} ->     {gap}')

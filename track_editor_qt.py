@@ -9,7 +9,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QSlider, QVBoxLayout, QHBoxLayout,
     QPushButton, QLineEdit, QListWidget, QFileDialog, QMessageBox,
-    QSpacerItem, QSizePolicy, QTabWidget
+    QSpacerItem, QSizePolicy, QTabWidget, QDialog
 )
 from PyQt5.QtCore import QTime, QTimer, QMutex, Qt, pyqtSignal
 from PyQt5.QtGui import QPixmap, QFont, QImage
@@ -18,6 +18,7 @@ from PyQt5.QtGui import QPixmap, QFont, QImage
 import storage_helper, extract_data, file_helper
 import data_postprocess
 import video_postprocess
+from AdjustmentDialog import AdjustmentDialog
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -218,6 +219,7 @@ class MainWindow(QtWidgets.QWidget):
         manual_frame_layout.addWidget(gaps_list_label, 0, 0)
 
         self.gaps_listbox = QListWidget()
+        self.gaps_listbox.itemDoubleClicked.connect(self.manual_gap_adjustment)
         manual_frame_layout.addWidget(self.gaps_listbox, 1, 0)
 
         # Tabs widget
@@ -864,6 +866,60 @@ class MainWindow(QtWidgets.QWidget):
 
         self.await_file_opened()
 
+    def populate_gaps_list(self):
+        self.gaps_listbox.clear()
+        for id, gaps in self.DATA_GAPS:
+            for gap in gaps:
+                self.gaps_listbox.addItem(f'{id:<5} ->     {gap}')
+    
+    def insert_adjusted_points(self, id: int, points: list[tuple[int, int]], frames: list[int]):
+        # iterate over affected frames
+        i = 0
+        for frame_number in frames:
+            new_tracks = []
+            old_tracks = self.TRIMMED_DATA[frame_number]
+            # iterate over tracks of affected frame, adjusting points
+            for track in old_tracks:
+                _id, _conf, _x1, _y1, _x2, _y2 = track
+                if _id == id:
+                    x, y = points[i]
+                    i += 1
+                    new_tracks.append( (_id, _conf, x, y, x, y) )
+                else:
+                    new_tracks.append(track)
+            # override old tracks
+            self.TRIMMED_DATA[frame_number] = sorted(new_tracks, key=lambda x: x[0])
+
+    def manual_gap_adjustment(self, item):
+        self.pause_preview()
+        try:
+            # retrieve gap information from selected item
+            id, gap = item.text().replace(' ', '').split('->')
+            id = int(id)
+            gap:list = eval(gap)
+            # get affected frames
+            frames = self.get_frames(gap[0], gap[-1])
+            # retrieve all tracks from affected frames
+            tracks_list = [list(tracks) for frame_number, tracks in self.TRIMMED_DATA.items() if frame_number in gap]
+            # iterate over tracks, searching for the relevant (to current id) tracks
+            points = []
+            for tracks in tracks_list:
+                for track in tracks:
+                    _id, _conf, _x1, _y1, _x2, _y2 = track
+                    if _id == id:
+                        points.append( (int((_x1 + _x2) / 2), int((_y1 + _y2) / 2)) )
+                        break
+            # open a popup window for manual adjustment, passing the prepared frames and points
+            dialog = AdjustmentDialog(frames, points)
+            # once the dialog closes (successfully) insert adjusted points into the data
+            if dialog.exec_() == QDialog.Accepted:
+                adjusted_points = dialog.get_points()
+                self.insert_adjusted_points(id, adjusted_points, gap)
+        except Exception as error:
+            QMessageBox.warning(self, 'Error', f'Failed to perform path adjustment!\n{error}')
+        finally:
+            self.resume_preview()
+    
     def get_frames(self, start_frame: int, frames_count: int) -> list[QPixmap]:
         frames = []
         paused_at = self.VIDEO_CAPTURE.get(cv2.CAP_PROP_POS_FRAMES)

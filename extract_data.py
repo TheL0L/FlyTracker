@@ -103,7 +103,8 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
     # write findings to the file
     with open(output_path, 'a', newline='') as file:
         writer = csv.writer(file)
-        treatment = extra_data['Treatment'].split('/')[0]
+        treatment = extra_data['Treatment']
+        treatment = treatment if treatment is None else treatment.split('/')[0]
         for ID in findings.keys():
             writer.writerow([
                 extra_data['Video Name'],
@@ -150,7 +151,7 @@ def decompose_path(path: str) -> dict:
     directory, filename, extension = file_helper.split_path(path)
 
     result = {
-        'Treatment':           None,
+        'Treatment':            None,
         'Video Name':           filename + extension,
         'Age':                  None,
         'Mating Date':          None,
@@ -187,7 +188,7 @@ def decompose_path(path: str) -> dict:
     result['Age']                  = int(g[0])
     result['Mating Date']          = date_format(g[1])
     result['Testing Date']         = date_format(g[2])
-    result['Treatment']           = g[3]
+    result['Treatment']            = g[3]
     result['Group']                = int(g[4])
     result['Technical Repetition'] = int(g[5])
     result['Vial Number']          = int(g[6])

@@ -92,7 +92,7 @@ def find_nearest(results):
     """
     min_index = 0
     for index in range(1, len(results)):
-        min_index = index if results[index] < results[min_index] else min_index
+        min_index = index if results[index][2] < results[min_index][2] else min_index
     return results[min_index]
 
 

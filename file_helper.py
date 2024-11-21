@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 def normalize_path(file_path: str) -> str:
     """
@@ -13,7 +13,7 @@ def normalize_path(file_path: str) -> str:
     Returns:
         str: The normalized file path.
     """
-    return os.path.normpath(file_path).replace('\\', '/')
+    return Path(file_path).resolve().as_posix()
 
 def prepare_output_path(output_path: str) -> None:
     """
@@ -28,8 +28,7 @@ def prepare_output_path(output_path: str) -> None:
     Returns:
         None
     """
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    Path(output_path).mkdir(parents=True, exist_ok=True)
 
 def check_existance(path: str) -> bool:
     """
@@ -43,7 +42,7 @@ def check_existance(path: str) -> bool:
     Returns:
         bool: True if the file or directory exists, False otherwise.
     """
-    return os.path.exists(path)
+    return Path(path).exists()
 
 def join_paths(path: str, *paths: str) -> str:
     """
@@ -58,7 +57,7 @@ def join_paths(path: str, *paths: str) -> str:
     Returns:
         str: The normalized, joined path.
     """
-    return normalize_path(os.path.join(path, *paths))
+    return normalize_path(str(Path(path, *paths)))
 
 def split_path(path: str) -> tuple[str, str, str]:
     """
@@ -77,6 +76,5 @@ def split_path(path: str) -> tuple[str, str, str]:
             - filename (str): The base name of the file without the extension.
             - extension (str): The file extension, including the period.
     """
-    directory, filename = os.path.split(path)
-    filename, extension = os.path.splitext(filename)
-    return directory, filename, extension
+    path = Path(path)
+    return normalize_path(path.parent), path.stem, path.suffix

@@ -2,14 +2,44 @@ import math
 import numpy as np
 
 def clamp(value, _min, _max):
+    """
+    Clamp a value between a minimum and maximum range.
+
+    Args:
+        value (float): The value to clamp.
+        _min (float): The minimum allowable value.
+        _max (float): The maximum allowable value.
+
+    Returns:
+        float: The clamped value.
+    """
     return max(_min, min(value, _max))
 
 
 def get_center(x1, y1, x2, y2):
-    return (x1 + x2)/2, (y1 + y2)/2
+    """
+    Calculate the center point of a rectangle.
+
+    Args:
+        x1, y1 (float): Top-left corner coordinates.
+        x2, y2 (float): Bottom-right corner coordinates.
+
+    Returns:
+        tuple[float, float]: The center coordinates (x, y).
+    """
+    return (x1 + x2) / 2, (y1 + y2) / 2
 
 
 def get_ids(tracks):
+    """
+    Extract unique IDs from a list of tracks.
+
+    Args:
+        tracks (list): A list of track tuples where the first element is the ID.
+
+    Returns:
+        set: A set of unique IDs.
+    """
     ids = set()
     for track in tracks:
         ids.add(track[0])
@@ -17,12 +47,31 @@ def get_ids(tracks):
 
 
 def square_distance(p1, p2):
+    """
+    Calculate the Euclidean distance between two points.
+
+    Args:
+        p1, p2 (tuple[float, float]): Points as (x, y) coordinates.
+
+    Returns:
+        float: The distance between the two points.
+    """
     x_dif = p2[0] - p1[0]
     y_dif = p2[1] - p1[1]
-    return math.sqrt( math.pow(x_dif, 2) + math.pow(y_dif, 2) )
+    return math.sqrt(math.pow(x_dif, 2) + math.pow(y_dif, 2))
 
 
 def calculate_distances(point, tracks):
+    """
+    Calculate distances between a given point and tracks.
+
+    Args:
+        point (tuple[float, float]): The reference point as (x, y).
+        tracks (list): A list of track tuples.
+
+    Returns:
+        list[tuple]: A list of tuples containing (id, confidence, distance).
+    """
     results = []
     for track in tracks:
         id, conf, x1, y1, x2, y2 = track
@@ -32,13 +81,32 @@ def calculate_distances(point, tracks):
 
 
 def find_nearest(results):
+    """
+    Find the nearest track based on distance.
+
+    Args:
+        results (list[tuple]): A list of tuples containing (id, confidence, distance).
+
+    Returns:
+        tuple: The tuple with the smallest distance.
+    """
     min_index = 0
     for index in range(1, len(results)):
         min_index = index if results[index] < results[min_index] else min_index
     return results[min_index]
 
 
-def generate_links(data, max_tracks_gap = 3.0):
+def generate_links(data, max_tracks_gap=3.0):
+    """
+    Generate links between swapped IDs based on proximity.
+
+    Args:
+        data (list[list]): Frames of tracks as a list of track lists.
+        max_tracks_gap (float): Maximum allowable distance for linking tracks.
+
+    Returns:
+        dict: A dictionary mapping swapped IDs to original IDs.
+    """
     # prepare a dictionary for linking swapped IDs
     links = {}  # {swapped: original}
 
@@ -91,6 +159,16 @@ def generate_links(data, max_tracks_gap = 3.0):
 
 
 def apply_constraints(data, constraints):
+    """
+    Apply spatial constraints to tracks.
+
+    Args:
+        data (list[list]): Frames of tracks as a list of track lists.
+        constraints (dict): A dictionary defining min/max bounds for x and y.
+
+    Returns:
+        dict: Filtered data with tracks within constraints.
+    """
     result = {}
 
     for frame_number in range(0, len(data)):
@@ -106,13 +184,20 @@ def apply_constraints(data, constraints):
                 continue
             trimmed_tracks[id] = (id, conf, x1, y1, x2, y2)
 
-        # append processed frame to results
         result[frame_number] = trimmed_tracks.values()
     return result
 
 
 def propagate_links(links):
-    # links = {swapped: original}
+    """
+    Propagate links to collapse chains of swapped IDs.
+
+    Args:
+        links (dict): Dictionary of swapped-to-original ID mappings.
+
+    Returns:
+        dict: Collapsed dictionary of ID mappings.
+    """
     collapsed = {}
     for swapped in links:
         current = swapped
@@ -123,6 +208,16 @@ def propagate_links(links):
 
 
 def process_data(data, links):
+    """
+    Process tracks data to fix swapped IDs based on links.
+
+    Args:
+        data (dict): Tracks data organized by frame.
+        links (dict): Dictionary of ID links.
+
+    Returns:
+        dict: Processed tracks data with fixed IDs.
+    """
     # track = tuple( id, conf, x1, y1, x2, y2 )
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
 
@@ -153,7 +248,16 @@ def process_data(data, links):
 
 
 def filter_by_ids(data: dict, requested_ids: set) -> dict:
-    # filter the data by the requested ids
+    """
+    Filter tracks by specific IDs.
+
+    Args:
+        data (dict): Tracks data organized by frame.
+        requested_ids (set): Set of IDs to retain.
+
+    Returns:
+        dict: Filtered tracks data.
+    """
     if requested_ids is not None and len(requested_ids) > 0:
         filtered_data = {}
         for frame_number, tracks in data.items():
@@ -168,9 +272,17 @@ def filter_by_ids(data: dict, requested_ids: set) -> dict:
 
 
 def find_gaps_in_data(data):
+    """
+    Identify gaps in data for each ID.
+
+    Args:
+        data (dict): Tracks data organized by frame.
+
+    Returns:
+        list: A list of gaps per ID.
+    """
     # track = tuple( id, conf, x1, y1, x2, y2 )
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
-
     appearances = {}
     # iterate over the data, and find for each id in which frames it appears
     for frame_number in range(0, len(data)):
@@ -201,9 +313,19 @@ def find_gaps_in_data(data):
 
 
 def fill_gaps_in_data(data, data_gaps):
+    """
+    Fill gaps in data by interpolating missing tracks.
+
+    Args:
+        data (dict): Tracks data organized by frame.
+        data_gaps (list): A list of gaps to fill.
+
+    Returns:
+        dict: Data with filled gaps.
+    """
     # track = tuple( id, conf, x1, y1, x2, y2 )
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
-
+    
     def get_point(tracks, id):
         for track in tracks:
             tid, conf, x1, y1, x2, y2 = track
@@ -229,8 +351,18 @@ def fill_gaps_in_data(data, data_gaps):
 
 
 def generate_points_between(start, end, count):
-    # generate <count> (equally spaced) points on a straight line <start, end>
-    x_values = np.linspace(start[0], end[0], count+2)
-    y_values = np.linspace(start[1], end[1], count+2)
+    """
+    Generate points on a straight line between two points.
+
+    Args:
+        start (tuple[int, int]): Starting point (x, y).
+        end (tuple[int, int]): Ending point (x, y).
+        count (int): Number of intermediate points to generate.
+
+    Returns:
+        list[tuple[int, int]]: List of generated points.
+    """
+    x_values = np.linspace(start[0], end[0], count + 2)
+    y_values = np.linspace(start[1], end[1], count + 2)
     points = [(int(x), int(y)) for x, y in zip(x_values, y_values)]
     return points[1:-1]

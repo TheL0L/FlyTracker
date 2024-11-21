@@ -258,16 +258,13 @@ def filter_by_ids(data: dict, requested_ids: set) -> dict:
     Returns:
         dict: Filtered tracks data.
     """
-    if requested_ids is not None and len(requested_ids) > 0:
+    if requested_ids:
         filtered_data = {}
         for frame_number, tracks in data.items():
-            filtered_data[frame_number] = []
-            for track in tracks:
-                id, conf, x1, y1, x2, y2 = track
-                if id not in requested_ids:
-                    continue
-                filtered_data[frame_number].append(track)
-        data = filtered_data
+            filtered_data[frame_number] = [
+                track for track in tracks if track[0] in requested_ids
+            ]
+        return filtered_data
     return data
 
 
@@ -285,30 +282,24 @@ def find_gaps_in_data(data):
     # data  = dict{ frame_number: [track_1, track_2, ..., track_n] }
     appearances = {}
     # iterate over the data, and find for each id in which frames it appears
-    for frame_number in range(0, len(data)):
-        for id in [d[0] for d in data[frame_number]]:
-            if id not in appearances.keys():
-                appearances[id] = []
-            appearances[id].append(frame_number)
+    for frame_number, tracks in data.items():
+        for id in [t[0] for t in tracks]:
+            appearances.setdefault(id, []).append(frame_number)
 
-    missing = {}
-    # iterate over the data, and find for each id in which frames it does not appear
-    for id, frames in appearances.items():
-        missing_frames = [f for f in range(frames[0], frames[-1]+1) if f not in frames]
-        if len(missing_frames) > 0:
-            missing[id] = missing_frames
-    
     gaps = []
     # iterate over the missing frames per id, and group them into gaps
-    for id, frames in missing.items():
-        groups = [[frames[0]]]
-        for i in range(1, len(frames)):
-            if frames[i] == frames[i - 1] + 1:
-                groups[-1].append(frames[i])
-            else:
-                groups.append([frames[i]])
-        gaps.append((id, groups))
-    
+    for id, frames in appearances.items():
+        # find for each id in which frames it does not appear
+        missing_frames = [f for f in range(frames[0], frames[-1] + 1) if f not in frames]
+        if missing_frames:
+            groups = [[missing_frames[0]]]
+            for i in range(1, len(missing_frames)):
+                if missing_frames[i] == missing_frames[i - 1] + 1:
+                    groups[-1].append(missing_frames[i])
+                else:
+                    groups.append([missing_frames[i]])
+            gaps.append((id, groups))
+
     return gaps
 
 
@@ -340,12 +331,12 @@ def fill_gaps_in_data(data, data_gaps):
             end_point   = get_point(data[gap[-1]+1], id)
             estimated = generate_points_between(start_point, end_point, len(gap))
             # insert the estimated points as track elements
-            for frame in gap:
-                x, y = estimated[frame - gap[0]]
+            for i, frame in enumerate(gap):
+                x, y = estimated[i]
                 tracks = list(data[frame])
                 tracks.append((id, None, x, y, x, y))
                 data[frame] = sorted(tracks, key=lambda x: x[0])
-    
+
     # return data without gaps
     return data
 

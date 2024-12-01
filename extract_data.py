@@ -317,6 +317,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         # [px] -> [cm]
         findings[id]['distance']  = convert_px_to_cm(findings[id]['distance'])
         findings[id]['upwards_distance']  = convert_px_to_cm(findings[id]['upwards_distance'])
+        findings[id]['max_height']  = convert_px_to_cm(findings[id]['max_height'])
 
     # delete old export if exists
     try:

@@ -95,6 +95,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 'Min Speed [cm/sec]',
                 'Max Speed [cm/sec]',
                 'Avg Speed [cm/sec]',
+                'Arithmetic Mean Speed [cm/sec]',
                 'Median Speed [cm/sec]',
                 'Positions (x, y)[cm, cm]',
                 'Treatment'
@@ -129,6 +130,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 findings[ID]['min_speed'],
                 findings[ID]['max_speed'],
                 findings[ID]['avg_speed'],
+                findings[ID]['arith_mean_speed'],
                 findings[ID]['med_speed'],
                 findings[ID]['positions'],
                 treatment
@@ -249,7 +251,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
                     'first_frame': frame_number, 'last_frame': None, 'total_frames': None,
                     'time': None, 'start_position': _position, 'end_position': None,
                     'positions': [], 'distance': None, 'min_speed': None,
-                    'max_speed': None, 'avg_speed': None, 'med_speed': None,
+                    'max_speed': None, 'avg_speed': None, 'arith_mean_speed': None, 'med_speed': None,
                     'upwards_distance': None, 'max_height': None, 'max_height_frames': None, 'max_height_time': None
                 }
             findings[id]['last_frame'] = frame_number
@@ -287,7 +289,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
 
         findings[id]['min_speed'] = np.min(speeds)
         findings[id]['max_speed'] = np.max(speeds)
-        findings[id]['avg_speed'] = np.mean(speeds)
+        findings[id]['arith_mean_speed'] = np.mean(speeds)
         findings[id]['med_speed'] = np.median(sorted(speeds))
         findings[id]['distance']  = total_distance
         findings[id]['max_height'] = max_height
@@ -296,6 +298,9 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         # calculate total frames and time
         findings[id]['total_frames'] = findings[id]['last_frame'] - findings[id]['first_frame'] + 1
         findings[id]['time'] = findings[id]['total_frames'] / frame_rate
+
+        # calculate average speed based on total distance covered
+        findings[id]['avg_speed'] = findings[id]['distance'] / findings[id]['total_frames']
 
         # calculate time taken to reach max height
         findings[id]['max_height_frames'] = findings[id]['first_frame'] + max_height_frames
@@ -313,6 +318,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         findings[id]['max_speed'] = convert_pxpf_to_cmps(findings[id]['max_speed'], frame_rate)
         findings[id]['avg_speed'] = convert_pxpf_to_cmps(findings[id]['avg_speed'], frame_rate)
         findings[id]['med_speed'] = convert_pxpf_to_cmps(findings[id]['med_speed'], frame_rate)
+        findings[id]['arith_mean_speed'] = convert_pxpf_to_cmps(findings[id]['arith_mean_speed'], frame_rate)
 
         # [px] -> [cm]
         findings[id]['distance']  = convert_px_to_cm(findings[id]['distance'])

@@ -273,7 +273,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
             x1, y1 = positions[i - 1]
             x2, y2 = positions[i]
             distance = np.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-            speeds.append(distance / 2)
+            speeds.append(distance)  # instantaneous speed = distance / delta time, and delta time is 1 frame (assuming no gaps in points)
             total_distance += distance
 
             # update max height

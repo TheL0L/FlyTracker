@@ -90,7 +90,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 'Distance [cm]',
                 'Upwards Distance [cm]',
                 'Max Height [cm]',
-                'Max Height Frames',
+                'Max Height Frame',
                 'Max Height Time [sec]',
                 'Min Speed [cm/sec]',
                 'Max Speed [cm/sec]',
@@ -125,7 +125,7 @@ def write_to_csv(findings: dict, extra_data: dict, output_path: str) -> None:
                 findings[ID]['distance'],
                 findings[ID]['upwards_distance'],
                 findings[ID]['max_height'],
-                findings[ID]['max_height_frames'],
+                findings[ID]['max_height_frame'],
                 findings[ID]['max_height_time'],
                 findings[ID]['min_speed'],
                 findings[ID]['max_speed'],
@@ -252,7 +252,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
                     'time': None, 'start_position': _position, 'end_position': None,
                     'positions': [], 'distance': None, 'min_speed': None,
                     'max_speed': None, 'avg_speed': None, 'arith_mean_speed': None, 'med_speed': None,
-                    'upwards_distance': None, 'max_height': None, 'max_height_frames': None, 'max_height_time': None
+                    'upwards_distance': None, 'max_height': None, 'max_height_frame': None, 'max_height_time': None
                 }
             findings[id]['last_frame'] = frame_number
             findings[id]['end_position'] = _position
@@ -267,7 +267,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         # calculate the speeds, travel distance and max height
         upwards_distance = 0
         max_height = 0
-        max_height_frames = 0
+        max_height_frame = 0
         total_distance = 0
         speeds = []
         for i in range(1, len(positions)):
@@ -281,7 +281,7 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
             # update max height
             if y2 > max_height:
                 max_height = y2
-                max_height_frames = i
+                max_height_frame = i
 
             # update upwards movement
             if y2 > y1:
@@ -303,8 +303,8 @@ def extract_findings(results_csv_path: str, requested_ids: set = None) -> str:
         findings[id]['avg_speed'] = findings[id]['distance'] / findings[id]['total_frames']
 
         # calculate time taken to reach max height
-        findings[id]['max_height_frames'] = findings[id]['first_frame'] + max_height_frames
-        findings[id]['max_height_time'] = findings[id]['max_height_frames'] / frame_rate
+        findings[id]['max_height_frame'] = findings[id]['first_frame'] + max_height_frame
+        findings[id]['max_height_time'] = findings[id]['max_height_frame'] / frame_rate
 
         ## perform conversions
         

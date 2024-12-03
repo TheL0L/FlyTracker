@@ -86,17 +86,41 @@ def draw_paths_onto_frame(frame_data, frame, paths):
                             Keys are object IDs and values are lists of (x, y) tuples representing the path.
                             Defaults to None.
     """
+    frame_height, frame_width = frame.shape[:2]  # Get frame dimensions
+
     # annotate active paths with corresponding IDs
     for track in frame_data:
         id, conf, x1, y1, x2, y2 = track
+        text = f'{id}'
+        font_face = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.4
+        thickness = 1
+        color = id_to_color(id)
+
+        # calculate the position and size of the text
+        center_x, center_y = int((x1 + x2) / 2), int((y1 + y2) / 2)
+        text_size, _ = cv2.getTextSize(text, font_face, font_scale, thickness)
+        text_width, text_height = text_size
+        text_x, text_y = center_x, center_y
+
+        # adjust position to keep text within frame
+        if text_x + text_width > frame_width:
+            text_x = frame_width - text_width
+        if text_x < 0:
+            text_x = 0
+        if text_y - text_height < 0:
+            text_y = text_height
+        if text_y > frame_height:
+            text_y = frame_height
+
         cv2.putText(
             img=        frame,
-            text=       f'{id}',
-            org=        tuple(np.int32([(x1 + x2) / 2, (y1 + y2) / 2])),
-            fontFace=   cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=  0.4,
-            color=      id_to_color(id),
-            thickness=  1,
+            text=       text,
+            org=        (text_x, text_y),
+            fontFace=   font_face,
+            fontScale=  font_scale,
+            color=      color,
+            thickness=  thickness,
             lineType=   cv2.LINE_AA
         )
 
